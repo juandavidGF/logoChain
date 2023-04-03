@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Inter } from 'next/font/google'
 import styles from '@/styles/Home.module.css'
 import { useState } from "react";
+import cn from "classnames";
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -12,9 +13,31 @@ export default function Home() {
 	const [loading, setLoading] = useState(false);
 	const [image, setImage] = useState(null);
 	const [canShowImage, setCanShowImage] = useState(false);
-
+	const [name, setName] = useState("");
+	const [tagline, setTagline] = useState("");
 
 	const showLoadingState = loading || (image && !canShowImage);
+
+	const handleSubmit =  async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+
+		setLoading(true);
+
+		const response = await fetch("/api/generate", {
+			method: "POST",
+			body: JSON.stringify({ prompt }),
+		});
+
+		const data = await response.json();
+
+		console.log('handleSubmit#data', data)
+
+		setImage(data.image);
+		setLoading(false);
+		setCanShowImage(true);
+	
+	}
+
   return (
     <>
       <Head>
@@ -31,18 +54,18 @@ export default function Home() {
 						</h1>
 						<form
 							className="flex flex-col mb-10 mt-6 w-full"
+							onSubmit={handleSubmit}
 						>
 							<label htmlFor="name">Insert the description of your idea, more specific better results</label>
 							<div className='w-full'>
-								<input
-									className="border-2 shadow-sm text-gray-700 rounded-sm px-3 py-2 mb-4 sm:mb-0 sm:min-w-[600px]"
-									type="text"
+								<textarea
+									className="border-2 shadow-sm text-gray-700 rounded-sm px-3 py-2 mb-4 w-full"
 									name="name"
 									id="name"
 									onChange={(e) => setPrompt(e.target.value)}
 								/>
 								<button
-									className="min-h-[40px] shadow-sm sm:w-[100px] py-2 inline-flex justify-center font-medium items-center px-4 bg-green-600 text-gray-100 sm:ml-2 rounded-md hover:bg-green-700"
+									className="min-h-[40px] shadow-sm sm:w-[100px] py-2 inline-flex justify-center font-medium items-center px-4 bg-green-600 text-gray-100 rounded-md hover:bg-green-700"
 									type="submit"
 								>
 									{showLoadingState && (
@@ -71,6 +94,27 @@ export default function Home() {
 								</button>
 							</div>
 						</form>
+						<div className="relative flex w-full items-center justify-center">
+							<p className="absolute top-0 left-0 text-gray-400 text-sm">{name}</p>
+							<p className="absolute bottom-0 left-0 text-gray-400 text-sm">{tagline}</p>
+							{image && (
+								<div className="w-full sm:w-[400px] h-[400px] rounded-md shadow-md relative">
+									<Image
+										alt={`Dall-E representation of: ${prompt}`}
+										className={cn(
+											"opacity-0 duration-1000 ease-in-out rounded-md shadow-md h-full object-cover",
+											{ "opacity-100": canShowImage }
+										)}
+										src={image}
+										fill={true}
+										onLoadingComplete={() => {
+											setCanShowImage(true);
+										}}
+									/>
+								</div>
+							)}
+						</div>
+									
 					</div>
 				</div>
       </main>
