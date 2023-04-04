@@ -12,41 +12,40 @@ type ErrorResponse = {
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data | ErrorResponse>
-) {
+) {	
+	if (req.method !== 'POST') {
+    res.status(405).send({ error: 'Only POST requests allowed' })
+    return
+  }
 
-	
-	if (req.method === 'POST') {
-		const { prompt } = req.body
+	const body = JSON.parse(req.body)
+	const { prompt } = body
 
-		console.log('prompt', prompt)
+	const generateEndpoint = process.env.GENERATE_ENDPOINT;
 
-		const generateEndpoint = process.env.GENERATE_ENDPOINT;
+	if (!generateEndpoint) {
+		res.status(500).json({ error: 'Generate endpoint not defined' })
+		return;
+	}
 
-
-    if (!generateEndpoint) {
-      res.status(500).json({ error: 'Generate endpoint not defined' })
-      return;
-    }
-		
+	try {
 		const response = await fetch(generateEndpoint, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				prompt: prompt,
+				product: prompt,
 				num_samples: 1,
 				temperature: 0.7,
 			})
 		})
 
 		const data = await response.json()
-
-		console.log('data', data)
-
+		console.log('handler#data', data)
 
 		res.status(200).json(data)
-	} else {
-		res.status(400).json({ error: 'Invalid request method' })
+	} catch (error) {
+		res.status(500).json({ error: 'Something went wrong' })
 	}
 }

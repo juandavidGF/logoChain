@@ -8,13 +8,12 @@ import cn from "classnames";
 const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
-
-	const [prompt, setPrompt] = useState("");
+	const [product, setProduct] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [image, setImage] = useState(null);
 	const [canShowImage, setCanShowImage] = useState(false);
 	const [name, setName] = useState("");
-	const [tagline, setTagline] = useState("");
+	const [description, setDescription] = useState("");
 
 	const showLoadingState = loading || (image && !canShowImage);
 
@@ -23,19 +22,44 @@ export default function Home() {
 
 		setLoading(true);
 
-		const response = await fetch("/api/generate", {
+		console.log('handleSubmit#prompt', product)
+
+		const payload_company = {
+			chain: "company_name",
+			prompt: product
+		}
+
+		const company_name_json = await (await fetch("/api/chat", {
 			method: "POST",
-			body: JSON.stringify({ prompt }),
-		});
+			body: JSON.stringify(payload_company),
+		})).json();
 
-		const data = await response.json();
+		// console.log('handleSubmit#company_name_json', company_name_json)
 
-		console.log('handleSubmit#data', data)
+		const company_name = company_name_json.result['content'];
+		
+		setName(company_name);
 
-		setImage(data.image);
-		setLoading(false);
-		setCanShowImage(true);
-	
+		const payload_description = {
+			chain: "company_logo_description",
+			prompt: company_name
+		}
+
+		const company_logo_description_json = await (await fetch("/api/chat", {
+			method: "POST",
+			body: JSON.stringify(payload_description),
+		})).json();
+
+		const company_logo_description = company_logo_description_json.result['content'];
+		
+		setDescription(company_logo_description);
+
+		
+
+		// setImage(data.image);
+		// setTagline(data.logo_description);
+		// setLoading(false);
+		// setCanShowImage(true);
 	}
 
   return (
@@ -62,7 +86,7 @@ export default function Home() {
 									className="border-2 shadow-sm text-gray-700 rounded-sm px-3 py-2 mb-4 w-full"
 									name="name"
 									id="name"
-									onChange={(e) => setPrompt(e.target.value)}
+									onChange={(e) => setProduct(e.target.value)}
 								/>
 								<button
 									className="min-h-[40px] shadow-sm sm:w-[100px] py-2 inline-flex justify-center font-medium items-center px-4 bg-green-600 text-gray-100 rounded-md hover:bg-green-700"
@@ -94,27 +118,30 @@ export default function Home() {
 								</button>
 							</div>
 						</form>
-						<div className="relative flex w-full items-center justify-center">
-							<p className="absolute top-0 left-0 text-gray-400 text-sm">{name}</p>
-							<p className="absolute bottom-0 left-0 text-gray-400 text-sm">{tagline}</p>
-							{image && (
-								<div className="w-full sm:w-[400px] h-[400px] rounded-md shadow-md relative">
-									<Image
-										alt={`Dall-E representation of: ${prompt}`}
-										className={cn(
-											"opacity-0 duration-1000 ease-in-out rounded-md shadow-md h-full object-cover",
-											{ "opacity-100": canShowImage }
-										)}
-										src={image}
-										fill={true}
-										onLoadingComplete={() => {
-											setCanShowImage(true);
-										}}
-									/>
-								</div>
-							)}
+						{image &&  (
+							<div className='justify-start'>
+								<p className='text-gray-400'>name: <span className="text-black text-sm">{name}</span></p>
+								<p className='text-gray-400'>descripcion: <span className="text-black text-sm">{description}</span></p>
+							</div>
+						)}
+						<div className="flex flex-col w-full items-center justify-center gap-4">
+							{image && 
+									<div className="w-full sm:w-[400px] h-[400px] rounded-md shadow-md relative">
+										<Image
+											alt={`Dall-E representation of: ${prompt}`}
+											className={cn(
+												"opacity-0 duration-1000 ease-in-out rounded-md shadow-md h-full object-cover",
+												{ "opacity-100": canShowImage }
+											)}
+											src={image}
+											fill={true}
+											onLoadingComplete={() => {
+												setCanShowImage(true);
+											}}
+										/>
+									</div>
+							}			
 						</div>
-									
 					</div>
 				</div>
       </main>
