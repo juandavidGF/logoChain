@@ -17,28 +17,32 @@ export default async function(req, res) {
 	const { chain } = body;
 	const { prompt } = body;
 
-	console.log('api/chat#req.body', body);
-	console.log('api/chat#chain', chain)
-	console.log('api/chat#prompt', prompt)
-
-	const content = chain === "company_name" ? 
-		`What is a good name for a company that makes: ${prompt}?`
-		: chain === "company_logo_description" ?
-			`Write a description of a logo for this company: ${prompt}`
-			: undefined;
-
-	console.log('api/chat#content', content);
-
 	try {
+		const content = chain === "company_name" ?
+				`What is a good name for a company that makes: ${prompt}?`
+			: chain === "company_slogan_tagline_domains" ?
+					`Create a slogan and tagline for ${prompt.product} that makes ${prompt.description}, and suggest 3 web domains`
+				: chain === "company_logo_description" ?
+					`take this examples of prompts for dall-e to create nice icon/logs:
+
+					1. Modern startup logo with no text, symmetrical, minimalistic, speed flash fast grocery delivery icon, centered, gradient, dark background.
+					2. appicon style, Create a minimalistic and modern logo for a blog post titled 'Maximizing Efficiency as an Indie Entrepreneur: Time Management and Prioritization Tips'. The logo should represent the concepts of time management, productivity, and entrepreneurship., flat icon
+					3. a tech company new logo, minimalistic, geometric, futuristic, stable diffusion, trending on artstation, sharp focus, studio photo, intricate details, highly detailed, by greg rutkowski.
+					4. A cute blue baby birdie, logo in a dark circle as the background, vibrant, adorable, bubbles, cheerful.
+					5. A slanting rectangle shape in red and black minimal logo in dark circle as the background, vibrant, 3d isomorphic.
+					
+					Now try to combine the features for the company: ${prompt.company_name}, and product: ${prompt.product}, to reflect the brand, and create a new and simple prompt for the logo/icon.
+					And pleas specify that the logo must not contain letters.
+					`
+					: (() => { throw new Error('chain not supported') })();
+	
 		const completion = await openai.createChatCompletion({
 			// model: "gpt-4",
 			model: "gpt-3.5-turbo",
 			messages: [{ "role": "system", "content": content }]
 		});
-		// console.log('completion', completion);
 		res.status(200).json({ result: completion.data.choices[0].message });
 	} catch (error) {
-		console.log('api/chat#error', error);
 		res.status(500).json({ error: error.message });
 	}
 }

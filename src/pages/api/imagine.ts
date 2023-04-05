@@ -21,27 +21,12 @@ export default async function handler(
 	const { prompt } = body
 
   try {
-
 		const response = await openai.createImage({
-			prompt: prompt,
-			n: 2,
+			prompt: prompt.description,
+			n: 4,
 			size: "1024x1024",
 		});
-    // const response = await fetch(DALL_E, {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-		// 		Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    //   },
-    //   body: JSON.stringify({
-    //     prompt,
-    //     n: 4,
-    //     size: "1024x1024",
-    //   }),
-    // });
-    // const json = await response.json();
-		console.log(response.data)
-    return res.status(200).json(response.data);
+    return res.status(200).json(response.data.data);
   } catch (error: any) {
     return res
       .status(500)

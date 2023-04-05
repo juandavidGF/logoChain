@@ -7,10 +7,14 @@ import cn from "classnames";
 
 const inter = Inter({ subsets: ['latin'] })
 
-
 interface ImageData {
   url: string;
 }
+
+type RequestPayload = {
+  chain: string;
+  prompt: any;
+};
 
 export default function Home() {
 	const [product, setProduct] = useState("");
@@ -19,59 +23,114 @@ export default function Home() {
 	const [canShowImage, setCanShowImage] = useState(false);
 	const [name, setName] = useState("");
 	const [description, setDescription] = useState("");
+	const [sloganTaglineDomains, setsLoganTaglineDomains] = useState("");
 
-	const showLoadingState = loading || (images && !canShowImage);
+	const showLoadingState = loading || (images.length > 0 && !canShowImage);
+
+	const request = async (endpoint: string, payload: RequestPayload): Promise<any> => {
+		return await (
+			await fetch(endpoint, {
+				method: "POST",
+				body: JSON.stringify(payload),
+			})
+		).json();
+	};
+	
+	const getCompanyName = async (product: string): Promise<string> => {
+		const payload: RequestPayload = {
+			chain: "company_name",
+			prompt: product,
+		};
+	
+		const response = await request("/api/chat", payload);
+		return response.result.content;
+	};
+
+	function parseBrandInfo(str: string): { slogan: string, tagline: string, webDomains: string[] } | null {
+		const regex = /Slogan:\s(.+)\nTagline:\s(.+)\n\nWeb Domains:\n((?:\d\.\s\S+\n)+\d\.\s\S+)/g;
+		const match = regex.exec(str);
+	
+		if (!match) {
+			return null;
+		}
+	
+		const slogan = match[1];
+		const tagline = match[2];
+		const webDomains = match[3].match(/\d\.\s(\S+)/g)?.map((match) => match.replace(/^\d\.\s/, '')) || [];
+
+		const brandInfo = { slogan, tagline, webDomains };
+	
+		return brandInfo;
+	}	
+	
+
+	const getSloganTaglineDomains = async (company_name: string, product: string): Promise<any> => {
+		const payload: RequestPayload = {
+			chain: "company_slogan_tagline_domains",
+			prompt: {
+				company_name: company_name,
+				product: product,
+			},
+		};
+
+		const response = await request("/api/chat", payload);
+
+		// const brandInfo = parseBrandInfo(response.result['content']);
+		// console.log('getSologanTaglineDomains#bandInfo: ', brandInfo);
+		
+		return response.result.content;
+	};
+
+	
+	const getCompanyLogoDescription = async (company_name: string, product: string): Promise<string> => {
+		const payload: RequestPayload = {
+			chain: "company_logo_description",
+			prompt: {
+				company_name: company_name,
+				product: product,
+			},
+		};
+	
+		const response = await request("/api/chat", payload);
+		return response.result.content;
+	};
+	
+	const getImageJson = async (
+		company_name: string,
+		product: string,
+		description: string
+	): Promise<any> => {
+		const payload: RequestPayload = {
+			chain: "company_logo_prompt",
+			prompt: {
+				company_name: company_name,
+				product: product,
+				description: description,
+			},
+		};
+
+		const response = await request("/api/imagine", payload);
+	
+		return response;
+	};	
+	
 
 	const handleSubmit =  async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-
 		setLoading(true);
 
-		console.log('handleSubmit#prompt', product)
-
-		const payload_company = {
-			chain: "company_name",
-			prompt: product
-		}
-
-		const company_name_json = await (await fetch("/api/chat", {
-			method: "POST",
-			body: JSON.stringify(payload_company),
-		})).json();
-
-		// console.log('handleSubmit#company_name_json', company_name_json)
-
-		const company_name = company_name_json.result['content'];
-		
+		const company_name = await getCompanyName(product);
 		setName(company_name);
 
-		const payload_description = {
-			chain: "company_logo_description",
-			prompt: company_name
-		}
+		const sloganTaglineDomains = await getSloganTaglineDomains(company_name, product);
+		setsLoganTaglineDomains(sloganTaglineDomains)
 
-		const company_logo_description_json = await (await fetch("/api/chat", {
-			method: "POST",
-			body: JSON.stringify(payload_description),
-		})).json();
-
-		const company_logo_description = company_logo_description_json.result['content'];
-		
+		const company_logo_description = await getCompanyLogoDescription(company_name, product);
 		setDescription(company_logo_description);
 
-
-		const image_json = await (await fetch("/api/image", {
-			method: "POST",
-			body: JSON.stringify(payload_description),
-		})).json();
-
-		console.log('image_json: ', image_json)
-
-		const images: string[] = image_json.data.map((ImageData: ImageData)  => ImageData.url);
-
-		console.log(images)
-
-		setImages(images)
+		const image_json = await getImageJson(company_name, product, company_logo_description);
+		const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
+		setImages(images);
 		
 		setLoading(false);
 		setCanShowImage(true);
@@ -87,15 +146,16 @@ export default function Home() {
       </Head>
       <main className="flex justify-center h-screen bg-gray-100">
   			<div className="w-full sm:w-auto px-4 py-20">
-					<div className='justify-center max-w-xl'>
+					<div className='justify-center max-w-xl mb-10'>
 						<h1 className="text-3xl font-bold">
-							Create the name, logo and tagline for your business idea
+							{/* Create the name, logo and slogan for your business idea */}
+							Get identity brand assets for your Business.
 						</h1>
 						<form
 							className="flex flex-col mb-10 mt-6 w-full"
 							onSubmit={handleSubmit}
 						>
-							<label htmlFor="name">Insert the description of your idea, more specific better results</label>
+							<label className='mb-2' htmlFor="name">Describe your product: </label>
 							<div className='w-full'>
 								<textarea
 									className="border-2 shadow-sm text-gray-700 rounded-sm px-3 py-2 mb-4 w-full"
@@ -137,18 +197,20 @@ export default function Home() {
 							<div className='justify-start'>
 								<p className='text-gray-400'>name: <span className="text-black text-sm">{name}</span></p>
 								<p className='text-gray-400'>descripcion: <span className="text-black text-sm">{description}</span></p>
+								<p className='text-gray-400'><span className="text-black text-sm">{sloganTaglineDomains}</span></p>
 							</div>
 						) : null }
-						<div className="flex flex-col w-full items-center justify-center gap-4">
+						<div className="grid grid-cols-2 gap-1 mt-2 mb-10">
 							{images.length > 0 ? (
 								images.map((url, index) => (
-									<div key={index} className="w-full sm:w-[400px] h-[400px] rounded-md shadow-md relative">
+									<div key={index} className="w-full aspect-square shadow-md relative">
 										<Image
 											alt={`Dall-E representation of: ${product}`}
 											className={cn(
-												"opacity-0 duration-1000 ease-in-out rounded-md shadow-md h-full object-cover",
+												"opacity-0 duration-1000 ease-in-out shadow-md h-full object-cover",
 												{ "opacity-100": canShowImage }
 											)}
+											sizes="(max-width: 640px) 100vw, 640px"
 											src={url}
 											fill={true}
 											onLoadingComplete={() => {
