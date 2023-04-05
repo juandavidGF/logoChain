@@ -10,6 +10,7 @@ const nextConfig = {
         pathname: '/pbxt/**',
       },
     ],
+		domains: ["oaidalleapiprodscus.blob.core.windows.net"],
   },
 }
 

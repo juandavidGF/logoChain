@@ -7,15 +7,20 @@ import cn from "classnames";
 
 const inter = Inter({ subsets: ['latin'] })
 
+
+interface ImageData {
+  url: string;
+}
+
 export default function Home() {
 	const [product, setProduct] = useState("");
 	const [loading, setLoading] = useState(false);
-	const [image, setImage] = useState(null);
+	const [images, setImages] = useState<string[]>([]);
 	const [canShowImage, setCanShowImage] = useState(false);
 	const [name, setName] = useState("");
 	const [description, setDescription] = useState("");
 
-	const showLoadingState = loading || (image && !canShowImage);
+	const showLoadingState = loading || (images && !canShowImage);
 
 	const handleSubmit =  async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -54,12 +59,22 @@ export default function Home() {
 		
 		setDescription(company_logo_description);
 
-		
 
-		// setImage(data.image);
-		// setTagline(data.logo_description);
-		// setLoading(false);
-		// setCanShowImage(true);
+		const image_json = await (await fetch("/api/image", {
+			method: "POST",
+			body: JSON.stringify(payload_description),
+		})).json();
+
+		console.log('image_json: ', image_json)
+
+		const images: string[] = image_json.data.map((ImageData: ImageData)  => ImageData.url);
+
+		console.log(images)
+
+		setImages(images)
+		
+		setLoading(false);
+		setCanShowImage(true);
 	}
 
   return (
@@ -118,29 +133,31 @@ export default function Home() {
 								</button>
 							</div>
 						</form>
-						{image &&  (
+						{images.length > 0 ? (
 							<div className='justify-start'>
 								<p className='text-gray-400'>name: <span className="text-black text-sm">{name}</span></p>
 								<p className='text-gray-400'>descripcion: <span className="text-black text-sm">{description}</span></p>
 							</div>
-						)}
+						) : null }
 						<div className="flex flex-col w-full items-center justify-center gap-4">
-							{image && 
-									<div className="w-full sm:w-[400px] h-[400px] rounded-md shadow-md relative">
+							{images.length > 0 ? (
+								images.map((url, index) => (
+									<div key={index} className="w-full sm:w-[400px] h-[400px] rounded-md shadow-md relative">
 										<Image
-											alt={`Dall-E representation of: ${prompt}`}
+											alt={`Dall-E representation of: ${product}`}
 											className={cn(
 												"opacity-0 duration-1000 ease-in-out rounded-md shadow-md h-full object-cover",
 												{ "opacity-100": canShowImage }
 											)}
-											src={image}
+											src={url}
 											fill={true}
 											onLoadingComplete={() => {
 												setCanShowImage(true);
 											}}
 										/>
 									</div>
-							}			
+								))
+							) : null }
 						</div>
 					</div>
 				</div>
