@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^2.4.0",
+    "@sendgrid/mail": "^7.7.0",
     "@types/node": "18.15.11",
     "@types/react": "18.0.31",
     "@types/react-dom": "18.0.11",

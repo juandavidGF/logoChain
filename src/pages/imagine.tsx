@@ -18,7 +18,6 @@ type RequestPayload = {
   prompt: any;
 };
 
-
 export default function Imagine() {
 	const { user, error, isLoading } = useUser();
 	const router = useRouter();
@@ -90,8 +89,7 @@ export default function Imagine() {
 		const brandInfo = { slogan, tagline, webDomains };
 	
 		return brandInfo;
-	}	
-	
+	}
 
 	const getSloganTaglineDomains = async (company_name: string, product: string): Promise<any> => {
 		const payload: RequestPayload = {
@@ -144,6 +142,13 @@ export default function Imagine() {
 	const handleSubmit =  async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setLoading(true);
+
+
+		if (user && user.email !== 'davad701@gmail.com') {
+			alert("We are processing the payments manually for now. We'll send you a email for complete the payments and add you to users list :)");
+			setLoading(false);
+			return;
+		}
 
 		// const company_name = await getCompanyName(product);
 		// setName(company_name);
