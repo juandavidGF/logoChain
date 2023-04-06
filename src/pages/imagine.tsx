@@ -6,6 +6,8 @@ import { useState } from "react";
 import cn from "classnames";
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useRouter } from 'next/router'
+import { Upload as UploadIcon } from "lucide-react";
+import { Download as DownloadIcon } from "lucide-react";
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -275,6 +277,15 @@ export default function Imagine() {
 												setCanShowImage(true);
 											}}
 										/>
+										<div className="relative">
+											<a
+												href={`/api/download-image?url=${encodeURIComponent(url)}`}
+												download={`image_${index + 1}.jpg`}
+												className="inline-flex justify-center w-sm items-center px-4 py-2 bg-black opacity-25 hover:bg-green-700 text-white rounded-md"
+											>
+												<DownloadIcon className="icon text-white" />
+											</a>
+										</div>
 									</div>
 								))
 							) : null }
