@@ -17,11 +17,11 @@ export default async function handler(
     res.status(405).send({ error: 'Only POST requests allowed' })
     return
   }
-
-	const { key, name, email } = req.body
 	let response;
 
-	const txt = `name: ${name}, email: ${email}, ${key}`;
+	const { key, product, name, email } = req.body
+
+	const txt = `name: ${name}, email: ${email}, product: ${product}`;
 	const subject = `novaBrand - ${key} - ${email}`;
 
 	const msg = {

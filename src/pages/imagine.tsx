@@ -22,7 +22,7 @@ export default function Imagine() {
 	const { user, error, isLoading } = useUser();
 	const router = useRouter();
 
-	const [product, setProduct] = useState("");
+	const [product, setProduct] = useState<string>("");
 	const [loading, setLoading] = useState(false);
 	const [images, setImages] = useState<string[]>([]);
 	const [canShowImage, setCanShowImage] = useState(false);
@@ -137,15 +137,34 @@ export default function Imagine() {
 	
 		return response;
 	};	
+
+	const sendEmail = async (key = 'default', product = 'default') => {
+		const data = {
+			key: key,
+			product: product,
+			name: user?.name,
+			email: user?.email
+		}
+
+		await fetch("/api/send-email", {
+			method: "POST",
+			headers: {
+				"content-type": "application/json"
+			},
+			body: JSON.stringify(data),
+		});
+	}
 	
 
 	const handleSubmit =  async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setLoading(true);
 
-
 		if (user && user.email !== 'davad701@gmail.com') {
-			alert("We are processing the payments manually for now. We'll send you a email for complete the payments and add you to users list :)");
+
+			sendEmail('generateCTA', product);
+
+			alert("We are processing the payments manually for now. We'll send you a email for complete the payment and add credits to your account :)");
 			setLoading(false);
 			return;
 		}
