@@ -48,9 +48,14 @@ export default async function(req, res) {
 						slogan:
 						tagline:`
 							: chain === "logo_description_brief" ? `
-							design brief: ${prompt.design_brief},
+							prouct: ${prompt.product},
+              design brief: ${prompt.design_brief},
 
-							create a prompt for a log, imagine a concept for like animal, object, colorez, using just keywords, responde just with a string, please specify in dont use the company name, or letters, text
+              given the last information, please describe a icon with minues than 30 words based an imaginary combined analogy concept like some object, animal or geometry figure, specify the form, background, elemtens, shapes, features, style, colors, ubication of each element, symetry, and not use the company name or product name in the description.
+
+							and second, describe why the icon is a good choice for the company and product, and why it is a good choice for the target audience.,
+
+							respond in this format, Prompt: , Why the logo:
 							` :(() => { throw new Error('chain not supported') })();
 
 		// console.log('imagine#chain+content', chain, content)
@@ -60,6 +65,7 @@ export default async function(req, res) {
 			model: "gpt-3.5-turbo",
 			messages: [{ "role": "system", "content": content }]
 		});
+		
 		res.status(200).json({ result: completion.data.choices[0].message });
 	} catch (error) {
 		res.status(500).json({ error: error.message });

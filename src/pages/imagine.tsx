@@ -113,10 +113,11 @@ export default function Imagine() {
 	};
 
 	
-	const getCompanyLogoDescription = async (design_brief: string): Promise<string> => {
+	const getCompanyLogoDescription = async (product: string, design_brief: string): Promise<string> => {
 		const payload: RequestPayload = {
 			chain: "logo_description_brief",
 			prompt: {
+				product,
 				design_brief: design_brief
 			},
 		};
@@ -183,8 +184,10 @@ export default function Imagine() {
 		setDesignBrief(design_brief);
 
 		// const company_logo_description = await getCompanyLogoDescription(company_name, product);
-		const logo_description_brief = await getCompanyLogoDescription(design_brief);
+		const logo_description_brief = await getCompanyLogoDescription(product, design_brief);
 		setDescription(logo_description_brief);
+
+
 		// console.log('handleSubmit#logo_description_brief: ', logo_description_brief)
 
 		const image_json = await getImageJson(logo_description_brief);
@@ -214,7 +217,7 @@ export default function Imagine() {
 							className="flex flex-col mb-10 mt-6 w-full"
 							onSubmit={handleSubmit}
 						>
-							<label className='mb-2' htmlFor="name">Describe your product: </label>
+							<label className='mb-2' htmlFor="name">Describe your product, company, brand ... </label>
 							<div className='w-full'>
 								<textarea
 									className="border-2 shadow-sm text-gray-700 rounded-sm px-3 py-2 mb-4 w-full"
