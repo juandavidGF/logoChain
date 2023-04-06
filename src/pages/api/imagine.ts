@@ -20,9 +20,11 @@ export default async function handler(
 	const body = JSON.parse(req.body)
 	const { prompt } = body
 
+	console.log('imagine#prompt', prompt);
+
   try {
 		const response = await openai.createImage({
-			prompt: prompt.description,
+			prompt: prompt.logo_description_brief,
 			n: 4,
 			size: "1024x1024",
 		});
