@@ -258,7 +258,7 @@ export default function Imagine() {
 						{images.length > 0 ? (
 							<div className='justify-start'>
 								{/* <p className='text-gray-400'>name: <span className="text-black text-sm">{name}</span></p> */}
-								{/* <p className='text-gray-400'>descripcion: <span className="text-black text-sm">{description}</span></p> */}
+								<p className='text-gray-400'>descripcion: <span className="text-black text-sm">{description}</span></p>
 								{/* <p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: sloganTaglineDomains}}/></p> */}
 								<p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: designBrief}}/></p>
 							</div>
