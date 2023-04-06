@@ -4,6 +4,8 @@ import { Inter } from 'next/font/google'
 import styles from '@/styles/Home.module.css'
 import { useState } from "react";
 import cn from "classnames";
+import { useUser } from '@auth0/nextjs-auth0/client';
+import { useRouter } from 'next/router'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -16,7 +18,11 @@ type RequestPayload = {
   prompt: any;
 };
 
+
 export default function Imagine() {
+	const { user, error, isLoading } = useUser();
+	const router = useRouter();
+
 	const [product, setProduct] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [images, setImages] = useState<string[]>([]);
@@ -25,6 +31,11 @@ export default function Imagine() {
 	const [description, setDescription] = useState("");
 	const [sloganTaglineDomains, setsLoganTaglineDomains] = useState("");
 	const [designBrief, setDesignBrief] = useState("");
+
+	if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>{error.message}</div>;
+
+	if(!user) router.push('/');
 
 	const showLoadingState = loading || (images.length > 0 && !canShowImage);
 

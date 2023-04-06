@@ -36,7 +36,7 @@ export default function Home() {
 							text-gray-100 rounded-md hover:bg-green-700 mt-2"
 						href="/api/auth/login"
 					>
-							Get started - 3 USD 10 generations
+						Get started - 3 USD 10 generations
 					</Link>
 				</div>
       </main>
