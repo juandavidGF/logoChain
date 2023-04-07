@@ -9,6 +9,9 @@ import { useRouter } from 'next/router'
 import { Upload as UploadIcon } from "lucide-react";
 import { Download as DownloadIcon } from "lucide-react";
 
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
+import { useTranslation } from 'next-i18next'
+
 const inter = Inter({ subsets: ['latin'] })
 
 interface ImageData {
@@ -20,10 +23,20 @@ type RequestPayload = {
   prompt: any;
 };
 
+export async function getStaticProps({ locale }) {
+  return {
+    props: {
+      ...(await serverSideTranslations(locale, ['common']))
+    }
+  };
+}
+
 export default function Imagine() {
 	const { user, error, isLoading } = useUser();
 	const router = useRouter();
 
+	const { t } = useTranslation('common');
+	
 	const [product, setProduct] = useState<string>("");
 	const [loading, setLoading] = useState(false);
 	const [images, setImages] = useState<string[]>([]);
@@ -172,6 +185,12 @@ export default function Imagine() {
 			return;
 		}
 
+		setDescription("")
+		setDesignBrief("")
+		setImages([])
+
+		
+
 		// const company_name = await getCompanyName(product);
 		// setName(company_name);
 
@@ -251,7 +270,7 @@ export default function Imagine() {
 											></path>
 										</svg>
 									)}
-									{!showLoadingState ? "Generate" : ""}
+									{!showLoadingState ? "Create" : ""}
 								</button>
 							</div>
 						</form>
