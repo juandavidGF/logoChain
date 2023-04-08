@@ -11,6 +11,7 @@ import { Download as DownloadIcon } from "lucide-react";
 
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import { useTranslation } from 'next-i18next'
+import type { GetStaticPropsContext } from 'next';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -23,7 +24,8 @@ type RequestPayload = {
   prompt: any;
 };
 
-export async function getStaticProps({ locale }) {
+export async function getStaticProps(context: GetStaticPropsContext) {
+	const locale = context.locale || 'en';
   return {
     props: {
       ...(await serverSideTranslations(locale, ['common']))
