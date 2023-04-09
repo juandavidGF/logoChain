@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { Inter } from 'next/font/google'
 import styles from '@/styles/Home.module.css'
-import { useState } from "react";
+import { useState , useRef, useEffect } from "react";
 import cn from "classnames";
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useRouter } from 'next/router'
@@ -23,6 +23,8 @@ type RequestPayload = {
   chain: string;
   prompt: any;
 };
+
+type ResponseRequest = string | {}
 
 export async function getStaticProps(context: GetStaticPropsContext) {
 	const locale = context.locale || 'en';
@@ -48,12 +50,22 @@ export default function Imagine() {
 	const [sloganTaglineDomains, setsLoganTaglineDomains] = useState("");
 	const [designBrief, setDesignBrief] = useState("");
 
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleInput = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'inherit';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  };
+
 	if (isLoading) return <div>Loading...</div>;
   if (error) return <div>{error.message}</div>;
 
 	if(!user) router.push('/');
 
 	const showLoadingState = loading || (images.length > 0 && !canShowImage);
+
 
 	const request = async (endpoint: string, payload: RequestPayload): Promise<any> => {
 		return await (
@@ -85,28 +97,10 @@ export default function Imagine() {
 		};
 
 		const response = await request("/api/chat", payload);
-		// console.log('getDesignBrief#response: ', response);
-		const contentWithLineBreaks = response.result.content.replace(/\n/g, '<br/>');
+		console.log('getDesignBrief#response: ', response.result);
 
-		return contentWithLineBreaks;
+		return response.result;
 	};
-
-	function parseBrandInfo(str: string): { slogan: string, tagline: string, webDomains: string[] } | null {
-		const regex = /Slogan:\s(.+)\nTagline:\s(.+)\n\nWeb Domains:\n((?:\d\.\s\S+\n)+\d\.\s\S+)/g;
-		const match = regex.exec(str);
-	
-		if (!match) {
-			return null;
-		}
-	
-		const slogan = match[1];
-		const tagline = match[2];
-		const webDomains = match[3].match(/\d\.\s(\S+)/g)?.map((match) => match.replace(/^\d\.\s/, '')) || [];
-
-		const brandInfo = { slogan, tagline, webDomains };
-	
-		return brandInfo;
-	}
 
 	const getSloganTaglineDomains = async (company_name: string, product: string): Promise<any> => {
 		const payload: RequestPayload = {
@@ -122,9 +116,7 @@ export default function Imagine() {
 		// const brandInfo = parseBrandInfo(response.result['content']);
 		// console.log('getSologanTaglineDomains#bandInfo: ', brandInfo);
 
-		const contentWithLineBreaks = response.result.content.replace(/\n/g, '<br/>');
-
-		return contentWithLineBreaks;
+		return response.result.content;
 	};
 
 	
@@ -138,7 +130,7 @@ export default function Imagine() {
 		};
 	
 		const response = await request("/api/chat", payload);
-		return response.result.content;
+		return response;
 	};
 	
 	const getImageJson = async (
@@ -172,14 +164,12 @@ export default function Imagine() {
 			body: JSON.stringify(data),
 		});
 	}
-	
 
 	const handleSubmit =  async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setLoading(true);
 
 		if (user && user.email !== 'davad701@gmail.com') {
-
 			sendEmail('generateCTA', product);
 
 			alert("We are processing the payments manually for now. We'll send you a email for complete the payment and add credits to your account :)");
@@ -191,8 +181,6 @@ export default function Imagine() {
 		setDesignBrief("")
 		setImages([])
 
-		
-
 		// const company_name = await getCompanyName(product);
 		// setName(company_name);
 
@@ -200,16 +188,15 @@ export default function Imagine() {
 		// setsLoganTaglineDomains(sloganTaglineDomains)
 
 		// console.log('handleSubmit#product: ', product)
-		const design_brief = await getDesignBrief(product);
-		// console.log('handleSubmit#design_brief: ', design_brief)
-		setDesignBrief(design_brief);
+		const design_briefN = await getDesignBrief(product);
+		// console.log('handleSubmit#design_brief: ', design_briefN)
+		setDesignBrief(design_briefN.replace(/\n/g, '<br/>'));
 
 		// const company_logo_description = await getCompanyLogoDescription(company_name, product);
-		const logo_description_brief = await getCompanyLogoDescription(product, design_brief);
+		const logo_description_brief = await getCompanyLogoDescription(product, design_briefN.replace(/\n/g, " "));
 		setDescription(logo_description_brief);
 
-
-		// console.log('handleSubmit#logo_description_brief: ', logo_description_brief)
+		console.log('handleSubmit#logo_description_brief: ', logo_description_brief)
 
 		const image_json = await getImageJson(logo_description_brief);
 		const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
@@ -241,7 +228,9 @@ export default function Imagine() {
 							<label className='mb-2' htmlFor="name">Describe your product, company, brand ... </label>
 							<div className='w-full'>
 								<textarea
-									className="border-2 shadow-sm text-gray-700 rounded-sm px-3 py-2 mb-4 w-full"
+									ref={textareaRef}
+									className="resize-none overflow-hidden border-2 shadow-sm text-gray-700 rounded-sm px-3 py-2 mb-4 w-full"
+									onInput={handleInput}
 									name="name"
 									id="name"
 									onChange={(e) => setProduct(e.target.value)}

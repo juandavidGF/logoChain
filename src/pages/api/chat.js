@@ -1,4 +1,5 @@
 import { Configuration, OpenAIApi } from "openai";
+import { parseBrandInfo } from '../../utils/parseResponse'
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -19,6 +20,7 @@ export default async function(req, res) {
 
 	// console.log('chat#chain', chain);
 	// console.log('chat#prompt', prompt);
+	console.log('api/chat#chain inputxxxxxxxxxx:  ', chain, 'prompt: ', prompt)
 
 	try {
 		const content = chain === "company_name" ?
@@ -53,20 +55,31 @@ export default async function(req, res) {
 
               given the last information, please describe a icon with minues than 30 words based an imaginary combined analogy concept like some object, animal or geometry figure, specify the form, background, elemtens, shapes, features, style, colors, ubication of each element, symetry, and not use the company name or product name in the description.
 
-							and second, describe why the icon is a good choice for the company and product, and why it is a good choice for the target audience.,
+							and second, describe why the icon components.
 
-							respond in this format, Prompt: , Why the logo:
+							respond in this format:
+							
+
+							Why: ,
+							Prompt:
 							` :(() => { throw new Error('chain not supported') })();
 
-		// console.log('imagine#chain+content', chain, content)
+		console.log('chat#chain+contentxxxxxxxxxxxxxxxxxxx: ', chain, content)
 	
 		const completion = await openai.createChatCompletion({
 			// model: "gpt-4",
 			model: "gpt-3.5-turbo",
 			messages: [{ "role": "system", "content": content }]
 		});
+
+		console.log('chat#completionxxxxxxxxx: ', completion.data.choices[0].message.content)
+
+		const parseCompletion = chain === 'logo_description_brief' ? 
+			parseBrandInfo(completion.data.choices[0].message.content)
+			: completion.data.choices[0].message.content
 		
-		res.status(200).json({ result: completion.data.choices[0].message });
+		console.log('api/chat#parseCompletionxxxxxxxxxxxxxxxxxx: ', chain, parseCompletion)
+		res.status(200).json({ result: parseCompletion });
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
