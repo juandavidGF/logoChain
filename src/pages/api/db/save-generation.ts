@@ -1,8 +1,9 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
-import clientPromise from '../../../lib/mongodb';
-import { Generation } from '../../../models/generation';
+import clientPromise from '@/lib/mongodb';
+import { UserGenModel, Generation } from '@/models/generation';
 const ObjectId = require('mongodb').ObjectId;
+import { processImages } from "@/lib/prepare-image-file-for-upload";
 
 type Data = {
   name: string
@@ -38,19 +39,20 @@ export default async function handler(
 		const db = mongoClient.db(process.env.MONGO_DB);
 		const collection = db.collection(process.env.MONGO_COLLECTION);
 
-
 		const {product, images, description, designBrief} = body.generation[0];
+		
+		const imagesBase64 = await processImages(images);
+		console.log('saveGeneration#imagesBase64', imagesBase64);
 
 		const generation: Generation = {
-			creationDate: Date.now(),
+			createdDate: Date.now(),
 			product: product,
-			images: images,
+			images: imagesBase64,
 			description: description,
 			designBrief: designBrief
 		}
 
 		console.log('save-generation#input -> generation: ', generation);
-		
 
 		const results = await collection.updateOne({ _id: new ObjectId(body.id) },
 			{

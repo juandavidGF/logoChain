@@ -1,25 +1,22 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
 import { useState , useRef, useEffect } from "react";
 import cn from "classnames";
 import { getSession, withPageAuthRequired } from '@auth0/nextjs-auth0';
 import { useRouter } from 'next/router'
-import { Upload as UploadIcon } from "lucide-react";
+import { Upload as UploadIcon, ChevronLeft, ChevronLeftSquare, ChevronRightSquare } from "lucide-react";
 import { Download as DownloadIcon } from "lucide-react";
 import Link from 'next/link'
 import { ObjectId } from 'mongodb';
-import { processImages } from "@/lib/prepare-image-file-for-upload";
 
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import { useTranslation } from 'next-i18next'
 import { GetServerSidePropsContext } from 'next';
-import { UserGeneration } from '@/models/generation';
+import { UserGenModel, Generation, LogoDescription } from '@/models/generation';
 import clientPromise from '@/lib/mongodb';
 
 const inter = Inter({ subsets: ['latin'] })
-
 
 interface User {
   name: string;
@@ -28,7 +25,7 @@ interface User {
 }
 
 interface ImagineProps {
-	userId: any;
+	userGen: UserGenModel;
   user: User;
 }
 
@@ -40,12 +37,6 @@ type RequestPayload = {
   chain: string;
   prompt: any;
 };
-
-interface LogoDescription {
-  Why: string;
-  Prompt: string;
-  [key: string]: string;
-}
 
 export const getServerSideProps = withPageAuthRequired({
 	async getServerSideProps(context: GetServerSidePropsContext) {
@@ -61,11 +52,10 @@ export const getServerSideProps = withPageAuthRequired({
 			};
 		}
 
-
 		await clientPromise
 
 		const baseUrl = process.env.NODE_ENV === 'production' ? 'https://logo.artmelon.me' : 'http://localhost:3000';
-		const res = await fetch(`${baseUrl}/api/db/getUserId`,
+		const res = await fetch(`${baseUrl}/api/db/getUser`,
 			{
 				method: 'POST',
 				headers: {
@@ -73,14 +63,18 @@ export const getServerSideProps = withPageAuthRequired({
 				},
 				body: JSON.stringify({
 					email: session.user.email,
+					name: session.user.name
 				}),
 			}
 		);
-		const { userId } = await res.json();
+		const userGen = await res.json();
+
+		console.log('pages/imagine#getServerSideProps#userGen: ', userGen);
+		console.log('pages/imagine#getServerSideProps#userGen._id: ', userGen._id);
 		
 		return {
 			props: {
-				userId,
+				userGen,
 				user: session.user,
 				...(await serverSideTranslations(locale, ['common'])),
 			},
@@ -88,7 +82,7 @@ export const getServerSideProps = withPageAuthRequired({
 	}
 });
 
-export default function Imagine({ userId, user }: ImagineProps) {
+export default function Imagine({ userGen, user }: ImagineProps) {
 	const router = useRouter();
 
 	const { t } = useTranslation('common');
@@ -98,9 +92,20 @@ export default function Imagine({ userId, user }: ImagineProps) {
 	const [images, setImages] = useState<string[]>([]);
 	const [canShowImage, setCanShowImage] = useState(false);
 	const [name, setName] = useState("");
-	const [description, setDescription] = useState<Partial<LogoDescription>>({});;
+	const [description, setDescription] = useState<Partial<LogoDescription>>({});
 	const [sloganTaglineDomains, setsLoganTaglineDomains] = useState("");
 	const [designBrief, setDesignBrief] = useState("");
+	const [generations, setGenerations] = useState<Generation[]>(userGen.generation);
+	const [genLen, setGenLen] = useState(userGen.generation.length);
+	const [genIndex, setGenIndex] = useState(genLen);
+
+	// si entra o carga, debe mostrar vacio, y botón de anterior.
+	// si le da en anterior, debe mostrar la anterior, (size - 1 - i) y no debe pasar de 0.
+	// Cuando se cree una nueva, se debe actualizar el valor de generations, y genLen, y mostrar el último.
+	// en teoría sirve ahora como esta, si le da en anterior, entonces muestra generations.
+	// podría establecer una flag para saber si ya genero una nueva, si es así muestro generations
+	// si es new, mostrar generations, donde la última es la nueva.
+	// si no new, mostrar empty, new se carga con atrás
 
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -257,17 +262,7 @@ export default function Imagine({ userId, user }: ImagineProps) {
 		const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
 		setImages(images);
 
-		// 2. convert to base64
-		let imagesBase64: string[] = [];
-		try {
-			const imagesBase64 = await processImages(images);
-			console.log('handleImageDropped#image', imagesBase64);
-    } catch (error) {
-			console.log('handleSubmit-processImage#error', error);
-			return;
-		}
-
-		await saveGeneration(imagesBase64, design_briefN.replace(/\n/g, '<br/>'), logo_description_brief);
+		await saveGeneration(images, design_briefN.replace(/\n/g, '<br/>'), logo_description_brief);
 		
 		setLoading(false);
 		setCanShowImage(true);
@@ -279,13 +274,13 @@ export default function Imagine({ userId, user }: ImagineProps) {
 		if(!user?.name) return;
 		if(!user?.email) return;
 		
-		const data: UserGeneration = {
-			id: userId,
+		const data: UserGenModel = {
+			id: userGen.id,
 			name: user.name,
 			email: user.email,
 			generation: [
 				{
-					creationDate: Date.now(),
+					createdDate: Date.now(),
 					product: product,
 					images: images,
 					description: logo_description_brief,
@@ -307,6 +302,32 @@ export default function Imagine({ userId, user }: ImagineProps) {
 		const result = await response.json();
 		console.log('saveGeneration#result: ', result);
 	}
+
+	const posisionateGen = (at: string) => {
+		console.log('at: ', at);
+    if (genLen === 0) return;
+    if (at === 'last') {
+      setGenIndex((genIndex - 1 + genLen) % genLen);
+			// setGenIndex((genIndex - 1) % genLen);
+    } else if (at === 'next') {
+      setGenIndex((genIndex + 1) % genLen);
+    }
+  };
+
+	useEffect(() => {
+		console.log('genIndex: ', genIndex);
+		// console.log('genIndex', genIndex);
+    if (genIndex === genLen) {
+      setDescription({});
+      setDesignBrief('');
+      setImages([]);
+			return;
+    }
+
+    setImages(generations[genIndex].images);
+    setDesignBrief(generations[genIndex].designBrief);
+    setDescription(generations[genIndex].description);
+  }, [genIndex]);
 
   return (
     <>
@@ -367,6 +388,26 @@ export default function Imagine({ userId, user }: ImagineProps) {
 								</button>
 							</div>
 						</form>
+						<div>
+							genLen: {genLen}
+							<br/>
+							genIndex: {genIndex}
+							<br/>
+							{genLen > 0 ? (
+								<>
+									{genIndex > -1 ? (
+										<button onClick={() => {posisionateGen('last')}}>
+											<ChevronLeftSquare />
+										</button>
+									) : null}
+									{genIndex < genLen - 1 ? (
+										<button onClick={() => {posisionateGen('next')}}>
+											<ChevronRightSquare />
+										</button>
+									) : null}
+								</>
+							) : null}
+						</div>
 						{images.length > 0 ? (
 							<div className='justify-start'>
 								{/* <p className='text-gray-400'>name: <span className="text-black text-sm">{name}</span></p> */}
