@@ -4,16 +4,33 @@ import { Inter } from 'next/font/google'
 import styles from '@/styles/Home.module.css'
 import { useState , useRef, useEffect } from "react";
 import cn from "classnames";
-import { useUser } from '@auth0/nextjs-auth0/client';
+import { getSession, withPageAuthRequired } from '@auth0/nextjs-auth0';
 import { useRouter } from 'next/router'
 import { Upload as UploadIcon } from "lucide-react";
 import { Download as DownloadIcon } from "lucide-react";
+import Link from 'next/link'
+import { ObjectId } from 'mongodb';
+import { processImages } from "@/lib/prepare-image-file-for-upload";
 
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import { useTranslation } from 'next-i18next'
-import type { GetStaticPropsContext } from 'next';
+import { GetServerSidePropsContext } from 'next';
+import { UserGeneration } from '@/models/generation';
+import clientPromise from '@/lib/mongodb';
 
 const inter = Inter({ subsets: ['latin'] })
+
+
+interface User {
+  name: string;
+  email: string;
+  // Add any other properties you need for the user object.
+}
+
+interface ImagineProps {
+	userId: any;
+  user: User;
+}
 
 interface ImageData {
   url: string;
@@ -24,19 +41,54 @@ type RequestPayload = {
   prompt: any;
 };
 
-type ResponseRequest = string | {}
-
-export async function getStaticProps(context: GetStaticPropsContext) {
-	const locale = context.locale || 'en';
-  return {
-    props: {
-      ...(await serverSideTranslations(locale, ['common']))
-    }
-  };
+interface LogoDescription {
+  Why: string;
+  Prompt: string;
+  [key: string]: string;
 }
 
-export default function Imagine() {
-	const { user, error, isLoading } = useUser();
+export const getServerSideProps = withPageAuthRequired({
+	async getServerSideProps(context: GetServerSidePropsContext) {
+		const session = await getSession(context.req, context.res);
+		const locale = context.locale || 'en';
+
+		if (!session || !session.user) {
+			return {
+				redirect: {
+					destination: '/api/auth/login',
+					permanent: false,
+				},
+			};
+		}
+
+
+		await clientPromise
+
+		const baseUrl = process.env.NODE_ENV === 'production' ? 'https://logo.artmelon.me' : 'http://localhost:3000';
+		const res = await fetch(`${baseUrl}/api/db/getUserId`,
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					email: session.user.email,
+				}),
+			}
+		);
+		const { userId } = await res.json();
+		
+		return {
+			props: {
+				userId,
+				user: session.user,
+				...(await serverSideTranslations(locale, ['common'])),
+			},
+		};
+	}
+});
+
+export default function Imagine({ userId, user }: ImagineProps) {
 	const router = useRouter();
 
 	const { t } = useTranslation('common');
@@ -46,7 +98,7 @@ export default function Imagine() {
 	const [images, setImages] = useState<string[]>([]);
 	const [canShowImage, setCanShowImage] = useState(false);
 	const [name, setName] = useState("");
-	const [description, setDescription] = useState("");
+	const [description, setDescription] = useState<Partial<LogoDescription>>({});;
 	const [sloganTaglineDomains, setsLoganTaglineDomains] = useState("");
 	const [designBrief, setDesignBrief] = useState("");
 
@@ -59,13 +111,7 @@ export default function Imagine() {
     }
   };
 
-	if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>{error.message}</div>;
-
-	if(!user) router.push('/');
-
 	const showLoadingState = loading || (images.length > 0 && !canShowImage);
-
 
 	const request = async (endpoint: string, payload: RequestPayload): Promise<any> => {
 		return await (
@@ -120,7 +166,7 @@ export default function Imagine() {
 	};
 
 	
-	const getCompanyLogoDescription = async (product: string, design_brief: string): Promise<string> => {
+	const getCompanyLogoDescription = async (product: string, design_brief: string): Promise<LogoDescription> => {
 		const payload: RequestPayload = {
 			chain: "logo_description_brief",
 			prompt: {
@@ -130,11 +176,11 @@ export default function Imagine() {
 		};
 	
 		const response = await request("/api/chat", payload);
-		return response;
+		return response.result;
 	};
 	
 	const getImageJson = async (
-		logo_description_brief: string
+		logo_description_brief: string | LogoDescription
 	): Promise<any> => {
 		const payload: RequestPayload = {
 			chain: "company_logo_prompt",
@@ -177,7 +223,7 @@ export default function Imagine() {
 			return;
 		}
 
-		setDescription("")
+		setDescription({})
 		setDesignBrief("")
 		setImages([])
 
@@ -196,14 +242,70 @@ export default function Imagine() {
 		const logo_description_brief = await getCompanyLogoDescription(product, design_briefN.replace(/\n/g, " "));
 		setDescription(logo_description_brief);
 
-		console.log('handleSubmit#logo_description_brief: ', logo_description_brief)
+		console.log('handleSubmit#logo_description_brief: ', logo_description_brief, logo_description_brief['Prompt'])
 
-		const image_json = await getImageJson(logo_description_brief);
+		let promptConcat: string = "";
+		Object.entries(logo_description_brief).forEach(([key, value]) => {
+			console.log('key: ', key)
+			if(key !== 'Why') {
+				promptConcat += value
+			}
+		});
+
+		const image_json = await getImageJson(promptConcat);
+		console.log('image_json', image_json);
 		const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
 		setImages(images);
+
+		// 2. convert to base64
+		let imagesBase64: string[] = [];
+		try {
+			const imagesBase64 = await processImages(images);
+			console.log('handleImageDropped#image', imagesBase64);
+    } catch (error) {
+			console.log('handleSubmit-processImage#error', error);
+			return;
+		}
+
+		await saveGeneration(imagesBase64, design_briefN.replace(/\n/g, '<br/>'), logo_description_brief);
 		
 		setLoading(false);
 		setCanShowImage(true);
+	}
+
+	const saveGeneration = async (images: any, design_brief: any, logo_description_brief: any) => {
+		console.log('saveGeneration#product: ', product);
+
+		if(!user?.name) return;
+		if(!user?.email) return;
+		
+		const data: UserGeneration = {
+			id: userId,
+			name: user.name,
+			email: user.email,
+			generation: [
+				{
+					creationDate: Date.now(),
+					product: product,
+					images: images,
+					description: logo_description_brief,
+					designBrief: design_brief
+				}
+			]
+		}
+
+		console.log('saveGeneration#data ', data);
+
+		const response = await fetch("/api/db/save-generation", {
+			method: "POST",
+			headers: {
+				"content-type": "application/json"
+			},
+			body: JSON.stringify(data),
+		});
+
+		const result = await response.json();
+		console.log('saveGeneration#result: ', result);
 	}
 
   return (
@@ -268,9 +370,9 @@ export default function Imagine() {
 						{images.length > 0 ? (
 							<div className='justify-start'>
 								{/* <p className='text-gray-400'>name: <span className="text-black text-sm">{name}</span></p> */}
-								<p className='text-gray-400'>descripcion: <span className="text-black text-sm">{description}</span></p>
 								{/* <p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: sloganTaglineDomains}}/></p> */}
 								<p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: designBrief}}/></p>
+								<p className='text-gray-400'><span className="text-black text-sm">Why the logo: {description?.Why}</span></p>
 							</div>
 						) : null }
 						<div className="grid grid-cols-2 gap-1 mt-2 mb-10">
@@ -305,6 +407,11 @@ export default function Imagine() {
 						</div>
 					</div>
 				</div>
+				{user ? (
+					<Link href="/api/auth/logout">
+						Logout
+					</Link>
+				) : null}
       </main>
     </>
   )

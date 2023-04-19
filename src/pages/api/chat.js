@@ -53,15 +53,15 @@ export default async function(req, res) {
 							prouct: ${prompt.product},
               design brief: ${prompt.design_brief},
 
-              given the last information, please describe a icon with minues than 30 words based an imaginary combined analogy concept like some object, animal or geometry figure, specify the form, background, elemtens, shapes, features, style, colors, ubication of each element, symetry, and not use the company name or product name in the description.
+							I need two items based in the last information, and respond in this format,
 
-							and second, describe why the icon components.
+							Prompt: ,
+							Why: 
 
-							respond in this format:
-							
+              the Promt describe a icon with minues than 30 words based an imaginary combined analogy concept like some object, animal or geometry figure, specify the form, background, elemtens, shapes, features, style, colors, ubication of each element, symetry, and not use the company name or product name in the description
 
-							Why: ,
-							Prompt:
+							the Why, is the reason behind the prompt icon composition.
+
 							` :(() => { throw new Error('chain not supported') })();
 
 		console.log('chat#chain+contentxxxxxxxxxxxxxxxxxxx: ', chain, content)
@@ -74,8 +74,8 @@ export default async function(req, res) {
 
 		console.log('chat#completionxxxxxxxxx: ', completion.data.choices[0].message.content)
 
-		const parseCompletion = chain === 'logo_description_brief' ? 
-			parseBrandInfo(completion.data.choices[0].message.content)
+		const parseCompletion = chain === 'logo_description_brief' ?
+			parseBrandInfo(chain, completion.data.choices[0].message.content)
 			: completion.data.choices[0].message.content
 		
 		console.log('api/chat#parseCompletionxxxxxxxxxxxxxxxxxx: ', chain, parseCompletion)
