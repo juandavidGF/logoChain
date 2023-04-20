@@ -15,7 +15,7 @@ export interface Generation {
 }
 
 export interface UserGenModel {
-	id?: number | ObjectId;
+	_id?: number | ObjectId;
 	name: string;
 	email: string;
 	createdDate?: number;

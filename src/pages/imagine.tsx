@@ -100,14 +100,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	const [genIndex, setGenIndex] = useState(genLen);
 	const [genLenPlus1, setGenLenPlus1] = useState(genLen + 1);
 
-	// si entra o carga, debe mostrar vacio, y botón de anterior.
-	// si le da en anterior, debe mostrar la anterior, (size - 1 - i) y no debe pasar de 0.
-	// Cuando se cree una nueva, se debe actualizar el valor de generations, y genLen, y mostrar el último.
-	// en teoría sirve ahora como esta, si le da en anterior, entonces muestra generations.
-	// podría establecer una flag para saber si ya genero una nueva, si es así muestro generations
-	// si es new, mostrar generations, donde la última es la nueva.
-	// si no new, mostrar empty, new se carga con atrás
-
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleInput = () => {
@@ -217,7 +209,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		});
 	}
 
-	const handleSubmit =  async (e: React.FormEvent<HTMLFormElement>) => {
+	const handleCreate =  async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setLoading(true);
 
@@ -229,9 +221,8 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			return;
 		}
 
-		setDescription({})
-		setDesignBrief("")
-		setImages([])
+		setGenIndex(genLen);
+		// TODO set assets to empty state.
 
 		// const company_name = await getCompanyName(product);
 		// setName(company_name);
@@ -240,33 +231,56 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		// setsLoganTaglineDomains(sloganTaglineDomains)
 
 		// console.log('handleSubmit#product: ', product)
-		const design_briefN = await getDesignBrief(product);
-		// console.log('handleSubmit#design_brief: ', design_briefN)
-		setDesignBrief(design_briefN.replace(/\n/g, '<br/>'));
 
-		// const company_logo_description = await getCompanyLogoDescription(company_name, product);
-		const logo_description_brief = await getCompanyLogoDescription(product, design_briefN.replace(/\n/g, " "));
-		setDescription(logo_description_brief);
-
-		console.log('handleSubmit#logo_description_brief: ', logo_description_brief, logo_description_brief['Prompt'])
-
-		let promptConcat: string = "";
-		Object.entries(logo_description_brief).forEach(([key, value]) => {
-			console.log('key: ', key)
-			if(key !== 'Why') {
-				promptConcat += value
-			}
-		});
-
-		const image_json = await getImageJson(promptConcat);
-		console.log('image_json', image_json);
-		const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
-		setImages(images);
-
-		await saveGeneration(images, design_briefN.replace(/\n/g, '<br/>'), logo_description_brief);
-		
-		setLoading(false);
-		setCanShowImage(true);
+		try {
+			const design_briefN = await getDesignBrief(product);
+			// console.log('handleSubmit#design_brief: ', design_briefN)
+			setDesignBrief(design_briefN.replace(/\n/g, '<br/>'));
+	
+			// const company_logo_description = await getCompanyLogoDescription(company_name, product);
+			const logo_description_brief = await getCompanyLogoDescription(product, design_briefN.replace(/\n/g, " "));
+			setDescription(logo_description_brief);
+	
+			console.log('handleSubmit#logo_description_brief: ', logo_description_brief, logo_description_brief['Prompt'])
+	
+			let promptConcat: string = "";
+			Object.entries(logo_description_brief).forEach(([key, value]) => {
+				console.log('key: ', key)
+				if(key !== 'Why') {
+					promptConcat += value
+				}
+			});
+	
+			const image_json = await getImageJson(promptConcat);
+			console.log('image_json', image_json);
+			const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
+			setImages(images);
+	
+			await saveGeneration(images, design_briefN.replace(/\n/g, '<br/>'), logo_description_brief);
+	
+			// #.
+			setGenerations((prevGenerations) => {
+				const newGeneration = {
+					createdDate: Date.now(),
+					product: product,
+					images: images,
+					description: logo_description_brief,
+					designBrief: design_briefN.replace(/\n/g, '<br/>'),
+				};
+			
+				const updatedGenerations = [...prevGenerations, newGeneration];
+				setGenLen(updatedGenerations.length);
+				setGenLenPlus1(updatedGenerations.length + 1);
+			
+				return updatedGenerations;
+			});
+			
+			setLoading(false);
+			setCanShowImage(true);
+		} catch (error) {
+			console.log('error: ', error);
+			return;
+		}
 	}
 
 	const saveGeneration = async (images: any, design_brief: any, logo_description_brief: any) => {
@@ -274,9 +288,11 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 
 		if(!user?.name) return;
 		if(!user?.email) return;
+
+		console.log('saveGeneration#userGen: ', userGen._id, userGen);
 		
 		const data: UserGenModel = {
-			id: userGen.id,
+			_id: userGen._id,
 			name: user.name,
 			email: user.email,
 			generation: [
@@ -301,25 +317,50 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		});
 
 		const result = await response.json();
-		console.log('saveGeneration#result: ', result);
+		console.log('??? saveGeneration#result: ', result);
 	}
 
-	// #.
-	const posisionateGen = (at: string) => {
-    if (genLen === 0) return;
-		const genLenPlus1 = genLen + 1;
-		// console.log('old', 'genIndex: ', genIndex, 'genLen: ', genLen, 'at: ', at);
-		const newIndex: number = at === 'last' ?
-			(genIndex - 1 + genLenPlus1) % genLenPlus1 
-			: at === 'next' ?
-				(genIndex + 1) % genLenPlus1
-				: genLenPlus1;
+	enum Navigation {
+		Previous,
+		Next,
+	}
 
-		// console.log('newIndex: ', newIndex);
+	const navigateGenerations = (direction: Navigation) => {
+		if (genLen === 0) return;
+		
+		let newIndex: number;
+	
+		switch (direction) {
+			case Navigation.Previous:
+				newIndex = (genIndex - 1 + genLenPlus1) % genLenPlus1;
+				break;
+			case Navigation.Next:
+				newIndex = (genIndex + 1) % genLenPlus1;
+				break;
+			default:
+				newIndex = genLenPlus1;
+				break;
+		}
+	
 		setGenIndex(newIndex);
-  };
+	};
+	
+	// const navigateGenerations = (at: string) => {
+  //   if (genLen === 0) return;
+	// 	const genLenPlus1 = genLen + 1;
+	// 	// console.log('old', 'genIndex: ', genIndex, 'genLen: ', genLen, 'at: ', at);
+	// 	const newIndex: number = at === 'last' ?
+	// 		(genIndex - 1 + genLenPlus1) % genLenPlus1 
+	// 		: at === 'next' ?
+	// 			(genIndex + 1) % genLenPlus1
+	// 			: genLenPlus1;
+
+	// 	// console.log('newIndex: ', newIndex);
+	// 	setGenIndex(newIndex);
+  // };
 
 	useEffect(() => {
+		// console.log('useEffect#gendIndex: ', genIndex);
     if (genIndex === genLen) {
       setDescription({});
       setDesignBrief('');
@@ -342,6 +383,13 @@ export default function Imagine({ userGen, user }: ImagineProps) {
       </Head>
       <main className="flex justify-center h-screen bg-gray-100">
   			<div className="w-full sm:w-auto px-4 py-20">
+					{user ? (
+						<div className=' absolute top-2 right-3'>
+							<Link href="/api/auth/logout">
+								Logout
+							</Link>
+						</div>
+					) : null}
 					<div className='justify-center max-w-xl mb-10'>
 						<h1 className="text-3xl font-bold">
 							{/* Create the name, logo and slogan for your business idea */}
@@ -349,7 +397,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 						</h1>
 						<form
 							className="flex flex-col mb-10 mt-6 w-full"
-							onSubmit={handleSubmit}
+							onSubmit={handleCreate}
 						>
 							<label className='mb-2' htmlFor="name">Describe your product, company, brand ... </label>
 							<div className='w-full'>
@@ -399,10 +447,10 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 							{genLen > 0 ? (
 								<>
 									<div className=' flex flex-row justify-between mb-3'>
-										<button onClick={() => {posisionateGen('last')}}>
+										<button onClick={() => {navigateGenerations(Navigation.Previous)}}>
 											<ChevronLeftSquare />
 										</button>
-										<button onClick={() => {posisionateGen('next')}}>
+										<button onClick={() => {navigateGenerations(Navigation.Next)}}>
 											<ChevronRightSquare />
 										</button>
 									</div>
@@ -449,11 +497,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 						</div>
 					</div>
 				</div>
-				{user ? (
-					<Link href="/api/auth/logout">
-						Logout
-					</Link>
-				) : null}
       </main>
     </>
   )

@@ -42,7 +42,7 @@ export default async function handler(
 		const {product, images, description, designBrief} = body.generation[0];
 		
 		const imagesBase64 = await processImages(images);
-		console.log('saveGeneration#imagesBase64', imagesBase64);
+		// console.log('saveGeneration#imagesBase64', imagesBase64);
 
 		const generation: Generation = {
 			createdDate: Date.now(),
@@ -52,9 +52,11 @@ export default async function handler(
 			designBrief: designBrief
 		}
 
-		console.log('save-generation#input -> generation: ', generation);
+		// console.log('save-generation#input -> generation: ', generation);
 
-		const results = await collection.updateOne({ _id: new ObjectId(body.id) },
+		console.log('save-generation#input -> body.id: ', body._id);
+
+		const results = await collection.updateOne({ _id: new ObjectId(body._id) },
 			{
 				$push: {
 					generation: generation
@@ -62,7 +64,13 @@ export default async function handler(
 			}
 		)
 
-		res.status(200).json({ message: 'Generation saved successfully', type: "Success" });
+		if (results['modifiedCount'] === 0) {
+			return res
+				.status(500)
+				.json({ message: 'User not found', type: "Internal server error" });
+		}
+
+		return res.status(200).json({ message: 'Generation saved successfully', type: "Success" });
 	} 
 	catch (error: any) {
     return res
