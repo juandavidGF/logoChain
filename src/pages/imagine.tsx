@@ -69,8 +69,8 @@ export const getServerSideProps = withPageAuthRequired({
 		);
 		const userGen = await res.json();
 
-		console.log('pages/imagine#getServerSideProps#userGen: ', userGen);
-		console.log('pages/imagine#getServerSideProps#userGen._id: ', userGen._id);
+		// console.log('pages/imagine#getServerSideProps#userGen: ', userGen);
+		// console.log('pages/imagine#getServerSideProps#userGen._id: ', userGen._id);
 		
 		return {
 			props: {
@@ -98,6 +98,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	const [generations, setGenerations] = useState<Generation[]>(userGen.generation);
 	const [genLen, setGenLen] = useState(userGen.generation.length);
 	const [genIndex, setGenIndex] = useState(genLen);
+	const [genLenPlus1, setGenLenPlus1] = useState(genLen + 1);
 
 	// si entra o carga, debe mostrar vacio, y botón de anterior.
 	// si le da en anterior, debe mostrar la anterior, (size - 1 - i) y no debe pasar de 0.
@@ -303,20 +304,22 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		console.log('saveGeneration#result: ', result);
 	}
 
+	// #.
 	const posisionateGen = (at: string) => {
-		console.log('at: ', at);
     if (genLen === 0) return;
-    if (at === 'last') {
-      setGenIndex((genIndex - 1 + genLen) % genLen);
-			// setGenIndex((genIndex - 1) % genLen);
-    } else if (at === 'next') {
-      setGenIndex((genIndex + 1) % genLen);
-    }
+		const genLenPlus1 = genLen + 1;
+		// console.log('old', 'genIndex: ', genIndex, 'genLen: ', genLen, 'at: ', at);
+		const newIndex: number = at === 'last' ?
+			(genIndex - 1 + genLenPlus1) % genLenPlus1 
+			: at === 'next' ?
+				(genIndex + 1) % genLenPlus1
+				: genLenPlus1;
+
+		// console.log('newIndex: ', newIndex);
+		setGenIndex(newIndex);
   };
 
 	useEffect(() => {
-		console.log('genIndex: ', genIndex);
-		// console.log('genIndex', genIndex);
     if (genIndex === genLen) {
       setDescription({});
       setDesignBrief('');
@@ -389,22 +392,20 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 							</div>
 						</form>
 						<div>
-							genLen: {genLen}
+							{/* genLen: {genLen}
 							<br/>
 							genIndex: {genIndex}
-							<br/>
+							<br/> */}
 							{genLen > 0 ? (
 								<>
-									{genIndex > -1 ? (
+									<div className=' flex flex-row justify-between mb-3'>
 										<button onClick={() => {posisionateGen('last')}}>
 											<ChevronLeftSquare />
 										</button>
-									) : null}
-									{genIndex < genLen - 1 ? (
 										<button onClick={() => {posisionateGen('next')}}>
 											<ChevronRightSquare />
 										</button>
-									) : null}
+									</div>
 								</>
 							) : null}
 						</div>

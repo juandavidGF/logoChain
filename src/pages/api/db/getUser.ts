@@ -47,7 +47,7 @@ export default async function handler(
 
 		const user = response[0] ? response[0] : await CreateUser(body, db, collection);
 
-		console.log('getUser#user', user)
+		// console.log('getUser#user', user)
 
 		// There is objectId, but in servedSideProps It's number
 
