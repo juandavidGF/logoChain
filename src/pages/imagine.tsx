@@ -92,7 +92,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	const [images, setImages] = useState<string[]>([]);
 	const [canShowImage, setCanShowImage] = useState(false);
 	const [name, setName] = useState("");
-	const [description, setDescription] = useState<Partial<LogoDescription>>({});
+	const [description, setDescription] = useState<Partial<LogoDescription | string>>({});
 	const [sloganTaglineDomains, setsLoganTaglineDomains] = useState("");
 	const [designBrief, setDesignBrief] = useState("");
 	const [generations, setGenerations] = useState<Generation[]>(userGen.generation);
@@ -164,7 +164,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	};
 
 	
-	const getCompanyLogoDescription = async (product: string, design_brief: string): Promise<LogoDescription> => {
+	const getCompanyLogoDescription = async (product: string, design_brief: string): Promise<LogoDescription | string> => {
 		const payload: RequestPayload = {
 			chain: "logo_description_brief",
 			prompt: {
@@ -233,13 +233,14 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			setDescription(logo_description_brief);
 
 			// TODO why the logo.
-	
-			console.log('handleSubmit#logo_description_brief: ', logo_description_brief, logo_description_brief['Prompt'])
 
-			let promptConcat: string;
+			let promptConcat: string | LogoDescription = "";
 	
-			const justGetTheLogo = true;
-			if (!justGetTheLogo) {
+			const justGetTheLogoDescription = true;
+			if (justGetTheLogoDescription) {
+				promptConcat = logo_description_brief;
+				console.log('handleSubmit#logo_description_brief: ', logo_description_brief, promptConcat)
+			} else {
 				let promptConcat: string = "";
 				Object.entries(logo_description_brief).forEach(([key, value]) => {
 					console.log('key: ', key)
@@ -247,9 +248,9 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 						promptConcat += value
 					}
 				});
+				// promptConcat = logo_description_brief['Prompt'];
 			}
 
-			promptConcat = logo_description_brief['Prompt'];
 
 			const image_json = await getImageJson(promptConcat);
 			console.log('image_json', image_json);

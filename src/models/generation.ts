@@ -10,7 +10,7 @@ export interface Generation {
 	createdDate: number;
   product: string;
   images: string[];
-  description: LogoDescription;
+  description: string | LogoDescription;
   designBrief: string;
 }
 

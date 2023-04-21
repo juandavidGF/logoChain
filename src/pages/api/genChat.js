@@ -123,7 +123,7 @@ export default async function(req, res) {
 
 		// 					` :(() => { throw new Error('chain not supported') })();
 
-		console.log('chat#chain+contentxxxxxxxxxxxxxxxxxxx: ', chain, content)
+		console.log('chat#chain: ', chain)
 	
 		const completion = await openai.createChatCompletion({
 			// model: "gpt-4",
@@ -131,9 +131,9 @@ export default async function(req, res) {
 			messages: [{ "role": "system", "content": content }]
 		});
 
-		console.log('chat#completionxxxxxxxxx: ', completion.data.choices[0].message.content)
+		// console.log('chat#completionxxxxxxxxx: ', completion.data.choices[0].message.content)
 
-		const parseCompletion = chain === 'logo_description_brief' ?
+		const parseCompletion = chain === 'logo_description_brief_+why' ?
 			parseBrandInfo(chain, completion.data.choices[0].message.content)
 			: completion.data.choices[0].message.content
 		
