@@ -18,6 +18,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "src/pages/api/chat.js", "src/pages/api/chat.js", "src/utils/parseResponse.ts", "src/utils/parseResponse.ts", "src/lib/mongodb.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "src/pages/api/generateChat.js", "src/pages/api/generateChat.js", "src/utils/parseResponse.ts", "src/utils/parseResponse.ts", "src/lib/mongodb.ts"],
   "exclude": ["node_modules"]
 }

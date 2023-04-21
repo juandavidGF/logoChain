@@ -69,8 +69,8 @@ export const getServerSideProps = withPageAuthRequired({
 		);
 		const userGen = await res.json();
 
-		// console.log('pages/imagine#getServerSideProps#userGen: ', userGen);
-		// console.log('pages/imagine#getServerSideProps#userGen._id: ', userGen._id);
+		console.log('pages/imagine#getServerSideProps#userGen: ', userGen);
+		console.log('pages/imagine#getServerSideProps#userGen._id: ', userGen._id);
 		
 		return {
 			props: {
@@ -128,7 +128,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			},
 		};
 	
-		const response = await request("/api/chat", payload);
+		const response = await request("/api/generate", payload);
 		return response.result.content;
 	};
 	
@@ -140,7 +140,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			}
 		};
 
-		const response = await request("/api/chat", payload);
+		const response = await request("/api/genChat", payload);
 		console.log('getDesignBrief#response: ', response.result);
 
 		return response.result;
@@ -155,7 +155,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			},
 		};
 
-		const response = await request("/api/chat", payload);
+		const response = await request("/api/genChat", payload);
 
 		// const brandInfo = parseBrandInfo(response.result['content']);
 		// console.log('getSologanTaglineDomains#bandInfo: ', brandInfo);
@@ -173,7 +173,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			},
 		};
 	
-		const response = await request("/api/chat", payload);
+		const response = await request("/api/genChat", payload);
 		return response.result;
 	};
 	
@@ -222,50 +222,49 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		}
 
 		setGenIndex(genLen);
-		// TODO set assets to empty state.
-
-		// const company_name = await getCompanyName(product);
-		// setName(company_name);
-
-		// const sloganTaglineDomains = await getSloganTaglineDomains(company_name, product);
-		// setsLoganTaglineDomains(sloganTaglineDomains)
-
-		// console.log('handleSubmit#product: ', product)
-
+		
 		try {
-			const design_briefN = await getDesignBrief(product);
+			const design_briefNLine = await getDesignBrief(product);
 			// console.log('handleSubmit#design_brief: ', design_briefN)
-			setDesignBrief(design_briefN.replace(/\n/g, '<br/>'));
+			setDesignBrief(design_briefNLine.replace(/\n/g, '<br/>'));
 	
 			// const company_logo_description = await getCompanyLogoDescription(company_name, product);
-			const logo_description_brief = await getCompanyLogoDescription(product, design_briefN.replace(/\n/g, " "));
+			const logo_description_brief = await getCompanyLogoDescription(product, design_briefNLine.replace(/\n/g, " "));
 			setDescription(logo_description_brief);
+
+			// TODO why the logo.
 	
 			console.log('handleSubmit#logo_description_brief: ', logo_description_brief, logo_description_brief['Prompt'])
+
+			let promptConcat: string;
 	
-			let promptConcat: string = "";
-			Object.entries(logo_description_brief).forEach(([key, value]) => {
-				console.log('key: ', key)
-				if(key !== 'Why') {
-					promptConcat += value
-				}
-			});
-	
+			const justGetTheLogo = true;
+			if (!justGetTheLogo) {
+				let promptConcat: string = "";
+				Object.entries(logo_description_brief).forEach(([key, value]) => {
+					console.log('key: ', key)
+					if(key !== 'Why') {
+						promptConcat += value
+					}
+				});
+			}
+
+			promptConcat = logo_description_brief['Prompt'];
+
 			const image_json = await getImageJson(promptConcat);
 			console.log('image_json', image_json);
 			const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
 			setImages(images);
 	
-			await saveGeneration(images, design_briefN.replace(/\n/g, '<br/>'), logo_description_brief);
+			await saveGeneration(images, design_briefNLine.replace(/\n/g, '<br/>'), logo_description_brief);
 	
-			// #.
 			setGenerations((prevGenerations) => {
 				const newGeneration = {
 					createdDate: Date.now(),
 					product: product,
 					images: images,
 					description: logo_description_brief,
-					designBrief: design_briefN.replace(/\n/g, '<br/>'),
+					designBrief: design_briefNLine.replace(/\n/g, '<br/>'),
 				};
 			
 				const updatedGenerations = [...prevGenerations, newGeneration];
