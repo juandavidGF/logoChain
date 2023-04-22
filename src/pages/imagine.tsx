@@ -177,16 +177,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		const response = await request("/api/genChat", payload);
 		return response.result;
 	};
-
-	const getElementChat = async (chain: string, prompt: string | {}) => {
-		const payload: RequestPayload = {
-			chain: chain,
-			prompt: prompt,
-		};
-
-		const response = await request("/api/genChat", payload);
-		return response.result;
-	}
 	
 	const getImageJson = async (
 		logo_description_brief: string | LogoDescription
@@ -257,7 +247,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 						promptConcat += value
 					}
 				});
-				// promptConcat = logo_description_brief['Prompt'];
 			}
 
 			const logo_description_why = (await request("/api/genChat", {
@@ -395,6 +384,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
     setImages(generations[genIndex].images);
     setDesignBrief(generations[genIndex].designBrief);
     setDescription(generations[genIndex].description);
+		setLogoDescriptionWhy(generations[genIndex].logoDescriptionWhy);
   }, [genIndex]);
 
   return (
