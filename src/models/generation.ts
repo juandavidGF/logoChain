@@ -12,6 +12,7 @@ export interface Generation {
   images: string[];
   description: string | LogoDescription;
   designBrief: string;
+	logoDescriptionWhy: string;
 }
 
 export interface UserGenModel {

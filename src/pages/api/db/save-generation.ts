@@ -25,7 +25,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data | ErrorResponse>
 ) {
-
 	if(req.method !== 'POST') {
 		res.status(405).send({ error: 'Only POST requests allowed' })
 		return
@@ -47,7 +46,7 @@ export default async function handler(
 		const db = mongoClient.db(process.env.MONGO_DB);
 		const collection = db.collection(process.env.MONGO_COLLECTION);
 
-		const {product, images, description, designBrief} = body.generation[0];
+		const {product, images, description, designBrief, logoDescriptionWhy} = body.generation[0];
 		
 		// const imagesBase64 = await processImages(images);
 		// console.log('saveGeneration#imagesBase64', imagesBase64);
@@ -55,7 +54,9 @@ export default async function handler(
 		let urlsImgCloudinary: string[] = [];
 		try {
 			urlsImgCloudinary = await Promise.all(await images.map(async (ulr: any) => {
-				const uploadedImage = await cloudinary.uploader.upload(ulr);
+				const uploadedImage = await cloudinary.uploader.upload(ulr, {
+					folder: 'logoChain'
+				});
 				return uploadedImage.secure_url;
 			}));
 		} catch (error: any) {
@@ -70,7 +71,8 @@ export default async function handler(
 			product: product,
 			images: urlsImgCloudinary,
 			description: description,
-			designBrief: designBrief
+			designBrief: designBrief,
+			logoDescriptionWhy: logoDescriptionWhy
 		}
 
 		const results = await collection.updateOne({ _id: new ObjectId(body._id) },

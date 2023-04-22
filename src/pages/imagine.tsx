@@ -15,7 +15,6 @@ import { useTranslation } from 'next-i18next'
 import { GetServerSidePropsContext } from 'next';
 import { UserGenModel, Generation, LogoDescription } from '@/models/generation';
 import clientPromise from '@/lib/mongodb';
-import { CldImage } from 'next-cloudinary';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -70,8 +69,8 @@ export const getServerSideProps = withPageAuthRequired({
 		);
 		const userGen = await res.json();
 
-		console.log('pages/imagine#getServerSideProps#userGen: ', userGen);
-		console.log('pages/imagine#getServerSideProps#userGen._id: ', userGen._id);
+		// console.log('pages/imagine#getServerSideProps#userGen: ', userGen);
+		// console.log('pages/imagine#getServerSideProps#userGen._id: ', userGen._id);
 		
 		return {
 			props: {
@@ -261,7 +260,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 				// promptConcat = logo_description_brief['Prompt'];
 			}
 
-			// #. TODO why the logo.
 			const logo_description_why = (await request("/api/genChat", {
 				chain: "logo_description_why",
 				prompt: {
@@ -274,14 +272,14 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			setLogoDescriptionWhy(logo_description_why);
 
 			const image_json = await getImageJson(promptConcat);
-			console.log('image_json', image_json);
+			// console.log('image_json', image_json);
 			// if(image_json === {}) {
 
 			// }
 			const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
 			setImages(images);
 	
-			await saveGeneration(images, design_briefNLine.replace(/\n/g, '<br/>'), logo_description_brief);
+			await saveGeneration(images, design_briefNLine.replace(/\n/g, '<br/>'), logo_description_brief, logo_description_why);
 	
 			setGenerations((prevGenerations) => {
 				const newGeneration = {
@@ -290,6 +288,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 					images: images,
 					description: logo_description_brief,
 					designBrief: design_briefNLine.replace(/\n/g, '<br/>'),
+					logoDescriptionWhy: logo_description_why
 				};
 			
 				const updatedGenerations = [...prevGenerations, newGeneration];
@@ -307,13 +306,13 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		}
 	}
 
-	const saveGeneration = async (images: any, design_brief: any, logo_description_brief: any) => {
-		console.log('saveGeneration#product: ', product);
+	const saveGeneration = async (images: any, design_brief: any, logo_description_brief: any, logo_description_why: any) => {
+		// console.log('saveGeneration#product: ', product);
 
 		if(!user?.name) return;
 		if(!user?.email) return;
 
-		console.log('saveGeneration#userGen: ', userGen._id, userGen);
+		// console.log('saveGeneration#userGen: ', userGen._id, userGen);
 		
 		const data: UserGenModel = {
 			_id: userGen._id,
@@ -325,7 +324,8 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 					product: product,
 					images: images,
 					description: logo_description_brief,
-					designBrief: design_brief
+					designBrief: design_brief,
+					logoDescriptionWhy: logo_description_why
 				}
 			]
 		}
@@ -341,7 +341,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		});
 
 		const result = await response.json();
-		console.log('??? saveGeneration#result: ', result);
+		console.log('saveGeneration#result: ', result);
 	}
 
 	enum Navigation {
@@ -468,7 +468,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 							<br/>
 							genIndex: {genIndex}
 							<br/> */}
-							{genLen > 0 ? (
+							{(genLen > 0 && !showLoadingState) ? (
 								<>
 									<div className=' flex flex-row justify-between mb-3'>
 										<button onClick={() => {navigateGenerations(Navigation.Previous)}}>
@@ -485,8 +485,8 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 							<div className='justify-start'>
 								{/* <p className='text-gray-400'>name: <span className="text-black text-sm">{name}</span></p> */}
 								{/* <p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: sloganTaglineDomains}}/></p> */}
-								<p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: designBrief}}/></p>
-								<p className='text-gray-400'><span className="text-black text-sm">Logo composition: {logoDescriptionWhy}</span></p>
+								<p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: designBrief}}/></p><br/>
+								<p className='text-gray-400'><span className="text-black text-sm">Logo composition: {logoDescriptionWhy}</span></p><br/>
 							</div>
 						) : null }
 						<div className="grid grid-cols-2 gap-1 mt-2 mb-10">
