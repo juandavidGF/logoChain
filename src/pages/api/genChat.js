@@ -76,8 +76,17 @@ export default async function(req, res) {
 
 					based in the last information,
 					
-					Create a Prompt to generate an icon fewer than 30 words based on an imaginary combined analogy concept like some object, animal, or geometry figure. Specify the form, background, elements, shapes, features, style, colors, location of each element, symmetry, and do not use the company name or product name.
+					Create a short Prompt to generate an icon fewer than 20 words based on an imaginary combined analogy concept like some object, animal, or geometry figure. Specify the form, background, elements, shapes, features, style, colors, location of each element, symmetry, and do not use the company name or product name.
 					`;
+					break;
+				case "logo_description_why":
+					content = `product: ${prompt.product},
+					design brief: ${prompt.design_brief},
+					icon composition: ${prompt.logo_description_brief},
+
+					Baed in the last information,
+
+					in least than 30 words, explain why you choose the icon composition.`;
 					break;
 			default:
 				throw new Error('chain not supported');

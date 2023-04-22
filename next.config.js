@@ -14,7 +14,7 @@ const nextConfig = {
         pathname: '/pbxt/**',
       },
     ],
-		domains: ["oaidalleapiprodscus.blob.core.windows.net"],
+		domains: ["oaidalleapiprodscus.blob.core.windows.net", 'res.cloudinary.com'],
   },
 }
 

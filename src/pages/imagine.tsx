@@ -15,6 +15,7 @@ import { useTranslation } from 'next-i18next'
 import { GetServerSidePropsContext } from 'next';
 import { UserGenModel, Generation, LogoDescription } from '@/models/generation';
 import clientPromise from '@/lib/mongodb';
+import { CldImage } from 'next-cloudinary';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -99,6 +100,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	const [genLen, setGenLen] = useState(userGen.generation.length);
 	const [genIndex, setGenIndex] = useState(genLen);
 	const [genLenPlus1, setGenLenPlus1] = useState(genLen + 1);
+	const [logoDescriptionWhy, setLogoDescriptionWhy] = useState("");
 
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -176,6 +178,16 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		const response = await request("/api/genChat", payload);
 		return response.result;
 	};
+
+	const getElementChat = async (chain: string, prompt: string | {}) => {
+		const payload: RequestPayload = {
+			chain: chain,
+			prompt: prompt,
+		};
+
+		const response = await request("/api/genChat", payload);
+		return response.result;
+	}
 	
 	const getImageJson = async (
 		logo_description_brief: string | LogoDescription
@@ -190,7 +202,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		const response = await request("/api/imagine", payload);
 	
 		return response;
-	};	
+	};
 
 	const sendEmail = async (key = 'default', product = 'default') => {
 		const data = {
@@ -232,8 +244,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			const logo_description_brief = await getCompanyLogoDescription(product, design_briefNLine.replace(/\n/g, " "));
 			setDescription(logo_description_brief);
 
-			// TODO why the logo.
-
 			let promptConcat: string | LogoDescription = "";
 	
 			const justGetTheLogoDescription = true;
@@ -251,9 +261,23 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 				// promptConcat = logo_description_brief['Prompt'];
 			}
 
+			// #. TODO why the logo.
+			const logo_description_why = (await request("/api/genChat", {
+				chain: "logo_description_why",
+				prompt: {
+					product,
+					design_brief: designBrief,
+					logo_description_brief: logo_description_brief
+				},
+			})).result;
+
+			setLogoDescriptionWhy(logo_description_why);
 
 			const image_json = await getImageJson(promptConcat);
 			console.log('image_json', image_json);
+			// if(image_json === {}) {
+
+			// }
 			const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
 			setImages(images);
 	
@@ -462,7 +486,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 								{/* <p className='text-gray-400'>name: <span className="text-black text-sm">{name}</span></p> */}
 								{/* <p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: sloganTaglineDomains}}/></p> */}
 								<p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: designBrief}}/></p>
-								<p className='text-gray-400'><span className="text-black text-sm">Why the logo: {description?.Why}</span></p>
+								<p className='text-gray-400'><span className="text-black text-sm">Logo composition: {logoDescriptionWhy}</span></p>
 							</div>
 						) : null }
 						<div className="grid grid-cols-2 gap-1 mt-2 mb-10">

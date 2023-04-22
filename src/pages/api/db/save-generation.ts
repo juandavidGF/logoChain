@@ -5,6 +5,14 @@ import { UserGenModel, Generation } from '@/models/generation';
 const ObjectId = require('mongodb').ObjectId;
 import { processImages } from "@/lib/prepare-image-file-for-upload";
 
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 type Data = {
   name: string
 } | any
@@ -41,20 +49,29 @@ export default async function handler(
 
 		const {product, images, description, designBrief} = body.generation[0];
 		
-		const imagesBase64 = await processImages(images);
+		// const imagesBase64 = await processImages(images);
 		// console.log('saveGeneration#imagesBase64', imagesBase64);
+
+		let urlsImgCloudinary: string[] = [];
+		try {
+			urlsImgCloudinary = await Promise.all(await images.map(async (ulr: any) => {
+				const uploadedImage = await cloudinary.uploader.upload(ulr);
+				return uploadedImage.secure_url;
+			}));
+		} catch (error: any) {
+			console.error(error);
+			return res
+				.status(500)
+				.json({ message: error.message, type: "Internal server error" });
+		}
 
 		const generation: Generation = {
 			createdDate: Date.now(),
 			product: product,
-			images: imagesBase64,
+			images: urlsImgCloudinary,
 			description: description,
 			designBrief: designBrief
 		}
-
-		// console.log('save-generation#input -> generation: ', generation);
-
-		console.log('save-generation#input -> body.id: ', body._id);
 
 		const results = await collection.updateOne({ _id: new ObjectId(body._id) },
 			{
@@ -74,7 +91,7 @@ export default async function handler(
 	} 
 	catch (error: any) {
     return res
-        .status(500)
-        .json({ message: error.message, type: "Internal server error" });
+			.status(500)
+			.json({ message: error.message, type: "Internal server error" });
 	}
 }
