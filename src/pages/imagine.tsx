@@ -15,6 +15,7 @@ import { useTranslation } from 'next-i18next'
 import { GetServerSidePropsContext } from 'next';
 import { UserGenModel, Generation, LogoDescription } from '@/models/generation';
 import clientPromise from '@/lib/mongodb';
+import SuggestionBox from '@/components/SuggestionBox';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -511,6 +512,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 						</div>
 					</div>
 				</div>
+				<SuggestionBox name={user.name} email={user.email}/>
       </main>
     </>
   )

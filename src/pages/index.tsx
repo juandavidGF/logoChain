@@ -5,6 +5,7 @@ import styles from '@/styles/Home.module.css'
 import { useState } from "react";
 import cn from "classnames";
 import Link from 'next/link';
+import SuggestionBox from '@/components/SuggestionBox';
 
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import { useTranslation } from 'next-i18next'
@@ -54,6 +55,7 @@ export default function Home() {
 						{t('price')}
 					</Link>
 				</div>
+				<SuggestionBox />
       </main>
     </>
   )
