@@ -238,7 +238,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			const justGetTheLogoDescription = true;
 			if (justGetTheLogoDescription) {
 				promptConcat = logo_description_brief;
-				console.log('handleSubmit#logo_description_brief: ', logo_description_brief, promptConcat)
+				// console.log('handleSubmit#logo_description_brief: ', logo_description_brief, promptConcat)
 			} else {
 				let promptConcat: string = "";
 				Object.entries(logo_description_brief).forEach(([key, value]) => {
