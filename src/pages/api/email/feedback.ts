@@ -19,12 +19,12 @@ export default async function handler(
   }
 	let response;
 
-	const { name, email, suggestion } = req.body
+	const { name, email, feedback } = req.body
 
 	const subject = `suggestion`;
 	const txt = `You have a suggestion - logo.artmelon.me, <br/>
 	user: ${name}, ${email}, <br/><br/>
-	suggestion: ${suggestion},<br/>
+	suggestion: ${feedback},<br/>
 	
 	<br/><br/>`;
 
