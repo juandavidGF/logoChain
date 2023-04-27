@@ -32,14 +32,14 @@ export default async function handler(
 	
 	Respond yes and we will send you the payment link.<br/><br/>
 	
-	<3 Juan Granados:<br/>
+	Juan Granados:<br/>
 	* https://twitter.com/juandavid_gf,<br/>
 	* https://www.linkedin.com/in/juandavidgf/<br/>`;
 
 	const msg = {
 		to: email, // Recipient
 		from: 'support@artmelon.me', // Verified sender
-		cc: 'juan@artmelon.me',
+		cc: ['juan@artmelon.me', 'juanchoda12@gmail.com'],
 		subject: subject,
 		text: txt,
 		html: `<strong>${txt}</strong>`,
