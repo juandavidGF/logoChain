@@ -319,7 +319,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			]
 		}
 
-		console.log('saveGeneration#data ', data);
+		// console.log('saveGeneration#data ', data);
 
 		const response = await fetch("/api/db/save-generation", {
 			method: "POST",
@@ -330,7 +330,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		});
 
 		const result = await response.json();
-		console.log('saveGeneration#result: ', result);
+		// console.log('saveGeneration#result: ', result);
 	}
 
 	enum Navigation {
