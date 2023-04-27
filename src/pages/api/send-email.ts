@@ -22,7 +22,7 @@ export default async function handler(
 	const { key, product, name, email } = req.body
 
 	const subject = `Request a payment link to get credits -> logo.artmelon.me`;
-	const txt = `You have requested one generation in logo.artmelon.me, <br/>
+	const txt = `You have requested one generation - logo.artmelon.me, <br/>
 	product: ${product},<br/>
 	user: ${name}, ${email}, <br/><br/>
 	
