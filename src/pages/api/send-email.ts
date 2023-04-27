@@ -21,12 +21,25 @@ export default async function handler(
 
 	const { key, product, name, email } = req.body
 
-	const txt = `name: ${name}, email: ${email}, product: ${product}`;
-	const subject = `novaBrand - ${key} - ${email}`;
+	const subject = `Request a payment link to get credits -> logo.artmelon.me`;
+	const txt = `You have requested one generation in logo.artmelon.me, <br/>
+	product: ${product},<br/>
+	user: ${name}, ${email}, <br/><br/>
+	
+	Do you want to get credits?,<br/><br/>
+
+	10 credits, 5USD<br/>
+	
+	Respond yes and we will send you the payment link.<br/><br/>
+	
+	<3 Juan Granados:<br/>
+	* https://twitter.com/juandavid_gf,<br/>
+	* https://www.linkedin.com/in/juandavidgf/<br/>`;
 
 	const msg = {
-		to: 'juanchoda12@gmail.com', // Recipient
+		to: email, // Recipient
 		from: 'support@artmelon.me', // Verified sender
+		cc: 'juan@artmelon.me',
 		subject: subject,
 		text: txt,
 		html: `<strong>${txt}</strong>`,
