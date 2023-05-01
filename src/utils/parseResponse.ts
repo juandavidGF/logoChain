@@ -1,4 +1,4 @@
-export function parseBrandInfo(chain = 'default', str: string): { [key: string]: any } | null {
+export function parseBrandInfo(str: string, chain = 'default'): { [key: string]: any } | null {
 	const lines = str.split('\n');
 	const result: { [key: string]: any } = {};
 

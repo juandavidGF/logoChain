@@ -6,12 +6,21 @@ export interface LogoDescription {
   [key: string]: string;
 }
 
+export interface DesighBrief {	
+	"Company Name"?: string;
+	"Web domain"?: string;
+	"Target Audience"?: string;
+	Slogan?: string;
+	Tagline?: string;
+	[ key: string ]: string | undefined;
+}
+
 export interface Generation {
 	createdDate: number;
   product: string;
   images: string[];
   description: string | LogoDescription;
-  designBrief: string;
+  designBrief: DesighBrief | string;
 	logoDescriptionWhy: string;
 }
 

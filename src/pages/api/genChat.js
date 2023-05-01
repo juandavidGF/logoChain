@@ -1,5 +1,5 @@
 import { Configuration, OpenAIApi } from "openai";
-import { parseBrandInfo } from '../../utils/parseResponse'
+import { parseBrandInfo } from '@/utils/parseResponse';
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -143,8 +143,10 @@ export default async function(req, res) {
 		// console.log('chat#completionxxxxxxxxx: ', completion.data.choices[0].message.content)
 
 		const parseCompletion = chain === 'logo_description_brief_+why' ?
-			parseBrandInfo(chain, completion.data.choices[0].message.content)
-			: completion.data.choices[0].message.content
+			parseBrandInfo(completion.data.choices[0].message.content, chain)
+			: chain === 'design_brief' ?
+				parseBrandInfo(completion.data.choices[0].message.content, chain) 
+				: completion.data.choices[0].message.content
 		
 		console.log('api/chat#parseCompletionxxxxxxxxxxxxxxxxxx: ', chain, parseCompletion)
 		res.status(200).json({ result: parseCompletion });

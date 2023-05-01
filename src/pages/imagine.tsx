@@ -13,7 +13,7 @@ import { ObjectId } from 'mongodb';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import { useTranslation } from 'next-i18next'
 import { GetServerSidePropsContext } from 'next';
-import { UserGenModel, Generation, LogoDescription } from '@/models/generation';
+import { UserGenModel, Generation, LogoDescription, DesighBrief} from '@/models/generation';
 import clientPromise from '@/lib/mongodb';
 import FeedbackBox from '@/components/FeedbackBox';
 
@@ -95,7 +95,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	const [name, setName] = useState("");
 	const [description, setDescription] = useState<Partial<LogoDescription | string>>({});
 	const [sloganTaglineDomains, setsLoganTaglineDomains] = useState("");
-	const [designBrief, setDesignBrief] = useState("");
+	const [designBrief, setDesignBrief] = useState<DesighBrief | string>("");
 	const [generations, setGenerations] = useState<Generation[]>(userGen.generation);
 	const [genLen, setGenLen] = useState(userGen.generation.length);
 	const [genIndex, setGenIndex] = useState(genLen);
@@ -134,7 +134,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		return response.result.content;
 	};
 	
-	const getDesignBrief = async (product: string): Promise<string> => {
+	const getDesignBrief = async (product: string): Promise<DesighBrief> => {
 		const payload: RequestPayload = {
 			chain: "design_brief",
 			prompt: {
@@ -228,10 +228,12 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		try {
 			const design_briefNLine = await getDesignBrief(product);
 			// console.log('handleSubmit#design_brief: ', design_briefN)
-			setDesignBrief(design_briefNLine.replace(/\n/g, '<br/>'));
+
+
+			setDesignBrief(design_briefNLine);
 	
 			// const company_logo_description = await getCompanyLogoDescription(company_name, product);
-			const logo_description_brief = await getCompanyLogoDescription(product, design_briefNLine.replace(/\n/g, " "));
+			const logo_description_brief = await getCompanyLogoDescription(product, JSON.stringify(design_briefNLine));
 			setDescription(logo_description_brief);
 
 			let promptConcat: string | LogoDescription = "";
@@ -269,7 +271,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
 			setImages(images);
 	
-			await saveGeneration(images, design_briefNLine.replace(/\n/g, '<br/>'), logo_description_brief, logo_description_why);
+			await saveGeneration(images, design_briefNLine, logo_description_brief, logo_description_why);
 	
 			setGenerations((prevGenerations) => {
 				const newGeneration = {
@@ -277,7 +279,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 					product: product,
 					images: images,
 					description: logo_description_brief,
-					designBrief: design_briefNLine.replace(/\n/g, '<br/>'),
+					designBrief: design_briefNLine,
 					logoDescriptionWhy: logo_description_why
 				};
 			
@@ -476,8 +478,19 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 							<div className='justify-start'>
 								{/* <p className='text-gray-400'>name: <span className="text-black text-sm">{name}</span></p> */}
 								{/* <p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: sloganTaglineDomains}}/></p> */}
-								<p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: designBrief}}/></p><br/>
-								<p className='text-gray-400'><span className="text-black text-sm">Logo composition: {logoDescriptionWhy}</span></p><br/>
+								{(typeof designBrief === 'string' && designBrief.length > 0) ? (
+									<p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: designBrief}}/><br/></p>
+								) : typeof designBrief === 'object' && designBrief !== null ? (
+									<>
+										{Object.entries(designBrief).map(([key, value]) => (
+											<p key={key}>
+												<strong>{key}:</strong> {value}
+												<br/>
+											</p>
+										))}
+									</>
+								): <p>There was a err, please try again, or send an email to support@artmelon.me</p>}
+								<p className='text-gray-400'><span className="text-black text-sm"><strong>Logo composition:</strong> {logoDescriptionWhy}</span></p><br/>
 							</div>
 						) : null }
 						<div className="grid grid-cols-2 gap-1 mt-2 mb-10">
