@@ -50,9 +50,9 @@ export default async function(req, res) {
 				
 				Based on the given product description, give me a design brief with the next items:
 
-				Company Name:
+				Company name:
 				Web domain:
-				Target Audience:
+				Target audience:
 				slogan:
 				tagline:`;
 				break;
@@ -87,6 +87,12 @@ export default async function(req, res) {
 					Baed in the last information,
 
 					in least than 30 words, explain why you choose the icon composition.`;
+					break;
+				case "get_domain":
+					content = `product: ${prompt.product},
+					company_name: ${prompt.company_name},
+
+					given the last information, suggest a web domainsdifferents than ${prompt.old_domain}.`;
 					break;
 			default:
 				throw new Error('chain not supported');
@@ -132,7 +138,7 @@ export default async function(req, res) {
 
 		// 					` :(() => { throw new Error('chain not supported') })();
 
-		console.log('chat#chain: ', chain)
+		console.log('chat#chain after switch: ', chain)
 	
 		const completion = await openai.createChatCompletion({
 			// model: "gpt-4",
@@ -147,10 +153,82 @@ export default async function(req, res) {
 			: chain === 'design_brief' ?
 				parseBrandInfo(completion.data.choices[0].message.content, chain) 
 				: completion.data.choices[0].message.content
+
+		console.log('flag#parseCompletion: ', parseCompletion)
+
+		let domain = parseCompletion['Web domain'];
+		let domainAvailibilityJson;
+		let domainavailibility;
+		let domainAvailabilityArr;
+		if(chain === 'design_brief') {
+			// TD check availibality, and format the response.
+			console.log('flag -0', domain);
+			let availability = await checkDomainAvailability(domain);
+			console.log('flag -1', availability);
+			domainAvailabilityArr = [{
+				domain: domain,
+				availability: availability
+			}]
+			let domainIndex = 0;
+			// let domain: any;
+			let domains = [];
+			console.log('flag0', domainAvailabilityArr);
+			while (domainavailibility === 'Not Available') {
+				if(domainIndex > 3) return;
+				console.log('flag3')
+				let domainsNLine = (await request("/api/genChat", {
+					chain: "get_domain",
+					prompt: {
+						product: product,
+						company_name: design_briefNLine['Company name'],
+						old_domain: domain,
+					},
+				})).result;
+
+				console.log('flag3')
+
+				console.log('genChat#flag1#domainsNLine: ', domainsNLine);
+
+				domains = domainsNLine.split('\n');
+
+				domainAvailabilityArr.push(await Promise.all(domains.map(async (dom) => {
+					return {
+						domain: dom,
+						availability: await checkDomainAvailability(dom)
+					}
+				})));
+
+
+				domainavailibility.some((domain) => domain.availability === 'Available') ? domainavailibility = 'Available' : domainavailibility = 'Not Available';
+
+				// domainavailibility = await checkDomainAvailability(domain);
+				console.log('flag2#availibility: ', domainAvailabilityArr);
+				domainIndex++;
+			}
+
+
+			
+		}
 		
 		console.log('api/chat#parseCompletionxxxxxxxxxxxxxxxxxx: ', chain, parseCompletion)
+
 		res.status(200).json({ result: parseCompletion });
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
+}
+
+
+const checkDomainAvailability = async (domain) => {
+	console.log('checkDomainAvailability#flag1')
+	let domainAvailibilityJson = await (await fetch(URL + domain, {
+		method: 'GET',
+		headers: {
+			'X-RapidAPI-Key': 'd72216071emshf4385a59c5c084ap176d62jsn306b5e377ec5',
+			'X-RapidAPI-Host': 'domain-checker7.p.rapidapi.com'
+		}
+	})).json()
+
+	console.log('checkDomainAvailability#flag2')
+	return domainAvailibilityJson['available'] ? 'Available' : 'Not Available';
 }

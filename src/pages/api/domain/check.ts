@@ -14,7 +14,7 @@ const URL = 'https://domain-checker7.p.rapidapi.com/whois?domain=';
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Data>
+  res: NextApiResponse<Data | ErrorResponse>
 ) {
 
 	if(req.method !== 'POST') {
@@ -25,20 +25,23 @@ export default async function handler(
 	const body = req.body;
 	const { domain } = body;
 
+	console.log('check#domain', domain);
+
 	try {
-		const response = await fetch(URL + domain, {
+		const response = await (await fetch(URL + domain, {
 			method: 'GET',
 			headers: {
 				'X-RapidAPI-Key': 'd72216071emshf4385a59c5c084ap176d62jsn306b5e377ec5',
 				'X-RapidAPI-Host': 'domain-checker7.p.rapidapi.com'
 			}
-		})
+		})).json()
 
-		const data = await response.json()
-		console.log('check#data', data);
+		console.log('check#response', response);
 
-		return res.status(200).json(data)
-	} catch (error) {
-		return res.status(500).json({ error: 'Something went wrong' })
+		return res.status(200).json(response)
+	} catch (error: any) {
+		return res
+      .status(500)
+      .json({ message: error.message, type: "Internal server error" });
 	}
 }

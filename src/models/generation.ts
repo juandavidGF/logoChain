@@ -6,13 +6,19 @@ export interface LogoDescription {
   [key: string]: string;
 }
 
+export interface webDomain {
+	domain: string;
+	available: boolean;
+}
+
 export interface DesighBrief {	
 	"Company Name"?: string;
-	"Web domain"?: string;
+	"Web domain"?: webDomain | webDomain[];
 	"Target Audience"?: string;
 	Slogan?: string;
 	Tagline?: string;
-	[ key: string ]: string | undefined;
+	domainAvailability?: boolean;
+	[ key: string ]: string | string[] | boolean | undefined | webDomain | webDomain[];
 }
 
 export interface Generation {

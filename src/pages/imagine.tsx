@@ -22,7 +22,7 @@ const inter = Inter({ subsets: ['latin'] })
 interface User {
   name: string;
   email: string;
-  // Add any other properties you need for the user object.
+  // TODO - Add any other properties you need for the user object.
 }
 
 interface ImagineProps {
@@ -199,8 +199,56 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		try {
 			const design_briefNLine = await getDesignBrief(product);
 
+			// Check Domain Availability
+			let domain = design_briefNLine['Web domain']?.replace(/(?:\\n|\n)/g, "");
+			console.log('handleCreate#domain: ', domain);
+
+			if (domain === undefined) {
+				console.log('handleCreate#domain: ', domain);
+				return;
+			}
+
+			let domainavailibility = await checkDomainAvailability(domain);
+			console.log('handleCreate#domainavailibility: ', domainavailibility);
+
+			let domainIndex = 0;
+			// let domain: any;
+			let domains = [];
+			while (domainavailibility === 'Not Available') {
+				if(domainIndex > 3) return;
+				let domainsNLine: string = (await request("/api/genChat", {
+					chain: "get_domain",
+					prompt: {
+						product: product,
+						company_name: design_briefNLine['Company name'],
+						old_domain: domain,
+					},
+				})).result;
+				if (domainsNLine === undefined) {
+					console.log('handleCreate#domain#undefined: ', domainsNLine);
+					return;
+				}
+				console.log('flag1#domainsNLine: ', domainsNLine);
+				domains = domainsNLine.split('\n');
+
+				domains = domains.map(dom => dom.replace(/^\d+\.\s*/, ""));
+
+				console.log('flag1#domains: ', typeof domains, domains);
+
+				let domainAvailabilityArr = await Promise.all(domains.map(async (dom) => {
+					return {
+						domain: dom,
+						availability: await checkDomainAvailability(dom)
+					}
+				}));
+				
+				// domainavailibility = await checkDomainAvailability(domain);
+				console.log('flag2#availibility: ', domainAvailabilityArr);
+				domainIndex++;
+			}
 
 			setDesignBrief(design_briefNLine);
+
 	
 			const logo_description_brief = await getCompanyLogoDescription(product, JSON.stringify(design_briefNLine));
 			setDescription(logo_description_brief);
@@ -210,7 +258,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			const justGetTheLogoDescription = true;
 			if (justGetTheLogoDescription) {
 				promptConcat = logo_description_brief;
-				// console.log('handleSubmit#logo_description_brief: ', logo_description_brief, promptConcat)
 			} else {
 				let promptConcat: string = "";
 				Object.entries(logo_description_brief).forEach(([key, value]) => {
@@ -264,7 +311,20 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		}
 	}
 
-	const saveGeneration = async (images: any, design_brief: any, logo_description_brief: any, logo_description_why: any) => {
+	const checkDomainAvailability = async (domain: string) => {
+		let domainAvailibilityJson = await (await fetch('/api/domain/check', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				domain: domain
+			}),
+		})).json();
+		return domainAvailibilityJson['available'] ? 'Available' : 'Not Available';
+	}
+
+	const saveGeneration = async (images: string[], design_brief: DesighBrief, logo_description_brief: any, logo_description_why: any) => {
 
 		if(!user?.name) return;
 		if(!user?.email) return;
