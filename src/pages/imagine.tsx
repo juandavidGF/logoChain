@@ -122,18 +122,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		).json();
 	};
 	
-	const getCompanyName = async (product: string): Promise<string> => {
-		const payload: RequestPayload = {
-			chain: "company_name",
-			prompt: {
-				product: product
-			},
-		};
-	
-		const response = await request("/api/generate", payload);
-		return response.result.content;
-	};
-	
 	const getDesignBrief = async (product: string): Promise<DesighBrief> => {
 		const payload: RequestPayload = {
 			chain: "design_brief",
@@ -146,23 +134,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		console.log('getDesignBrief#response: ', response.result);
 
 		return response.result;
-	};
-
-	const getSloganTaglineDomains = async (company_name: string, product: string): Promise<any> => {
-		const payload: RequestPayload = {
-			chain: "company_slogan_tagline_domains",
-			prompt: {
-				company_name: company_name,
-				product: product,
-			},
-		};
-
-		const response = await request("/api/genChat", payload);
-
-		// const brandInfo = parseBrandInfo(response.result['content']);
-		// console.log('getSologanTaglineDomains#bandInfo: ', brandInfo);
-
-		return response.result.content;
 	};
 
 	
@@ -227,12 +198,10 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		
 		try {
 			const design_briefNLine = await getDesignBrief(product);
-			// console.log('handleSubmit#design_brief: ', design_briefN)
 
 
 			setDesignBrief(design_briefNLine);
 	
-			// const company_logo_description = await getCompanyLogoDescription(company_name, product);
 			const logo_description_brief = await getCompanyLogoDescription(product, JSON.stringify(design_briefNLine));
 			setDescription(logo_description_brief);
 
@@ -264,10 +233,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			setLogoDescriptionWhy(logo_description_why);
 
 			const image_json = await getImageJson(promptConcat);
-			// console.log('image_json', image_json);
-			// if(image_json === {}) {
 
-			// }
 			const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
 			setImages(images);
 	
@@ -299,12 +265,9 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	}
 
 	const saveGeneration = async (images: any, design_brief: any, logo_description_brief: any, logo_description_why: any) => {
-		// console.log('saveGeneration#product: ', product);
 
 		if(!user?.name) return;
 		if(!user?.email) return;
-
-		// console.log('saveGeneration#userGen: ', userGen._id, userGen);
 		
 		const data: UserGenModel = {
 			_id: userGen._id,
@@ -322,8 +285,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			]
 		}
 
-		// console.log('saveGeneration#data ', data);
-
 		const response = await fetch("/api/db/save-generation", {
 			method: "POST",
 			headers: {
@@ -333,7 +294,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		});
 
 		const result = await response.json();
-		// console.log('saveGeneration#result: ', result);
 	}
 
 	enum Navigation {
@@ -360,23 +320,8 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	
 		setGenIndex(newIndex);
 	};
-	
-	// const navigateGenerations = (at: string) => {
-  //   if (genLen === 0) return;
-	// 	const genLenPlus1 = genLen + 1;
-	// 	// console.log('old', 'genIndex: ', genIndex, 'genLen: ', genLen, 'at: ', at);
-	// 	const newIndex: number = at === 'last' ?
-	// 		(genIndex - 1 + genLenPlus1) % genLenPlus1 
-	// 		: at === 'next' ?
-	// 			(genIndex + 1) % genLenPlus1
-	// 			: genLenPlus1;
-
-	// 	// console.log('newIndex: ', newIndex);
-	// 	setGenIndex(newIndex);
-  // };
 
 	useEffect(() => {
-		// console.log('useEffect#gendIndex: ', genIndex);
     if (genIndex === genLen) {
       setDescription({});
       setDesignBrief('');
@@ -489,7 +434,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 											</p>
 										))}
 									</>
-								): <p>There was a err, please try again, or send an email to support@artmelon.me</p>}
+								): <p>There was an error. Please try again or send a message to feedback.</p>}
 								<p className='text-gray-400'><span className="text-black text-sm"><strong>Logo composition:</strong> {logoDescriptionWhy}</span></p><br/>
 							</div>
 						) : null }
