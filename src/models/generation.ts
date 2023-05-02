@@ -13,12 +13,12 @@ export interface webDomain {
 
 export interface DesighBrief {	
 	"Company Name"?: string;
-	"Web domain"?: webDomain | webDomain[];
+	"Web domain"?: webDomain[];
 	"Target Audience"?: string;
 	Slogan?: string;
 	Tagline?: string;
 	domainAvailability?: boolean;
-	[ key: string ]: string | string[] | boolean | undefined | webDomain | webDomain[];
+	[ key: string ]: string | string[] | boolean | undefined | webDomain[];
 }
 
 export interface Generation {

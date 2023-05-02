@@ -23,7 +23,6 @@ export default async function(req, res) {
 	console.log('api/chat#chain inputxxxxxxxxxx:  ', chain, 'prompt: ', prompt)
 
 	try {
-
 		let content;
 		switch (chain) {
 			case "company_name":
@@ -92,8 +91,7 @@ export default async function(req, res) {
 					content = `product: ${prompt.product},
 					company_name: ${prompt.company_name},
 
-					given the last information, suggest a web domainsdifferents than ${prompt.old_domain}.`;
-					break;
+					suggest web domains different than ${domainAvailabilityArr[domainIndex]['domain']}. and related with the company name and product.`;
 			default:
 				throw new Error('chain not supported');
 		}		
@@ -148,67 +146,38 @@ export default async function(req, res) {
 
 		// console.log('chat#completionxxxxxxxxx: ', completion.data.choices[0].message.content)
 
-		const parseCompletion = chain === 'logo_description_brief_+why' ?
+		let parseCompletion = chain === 'logo_description_brief_+why' ?
 			parseBrandInfo(completion.data.choices[0].message.content, chain)
 			: chain === 'design_brief' ?
-				parseBrandInfo(completion.data.choices[0].message.content, chain) 
+				parseBrandInfo(completion.data.choices[0].message.content, chain)
 				: completion.data.choices[0].message.content
 
 		console.log('flag#parseCompletion: ', parseCompletion)
 
-		let domain = parseCompletion['Web domain'];
-		let domainAvailibilityJson;
-		let domainavailibility;
-		let domainAvailabilityArr;
+		
 		if(chain === 'design_brief') {
-			// TD check availibality, and format the response.
-			console.log('flag -0', domain);
-			let availability = await checkDomainAvailability(domain);
-			console.log('flag -1', availability);
-			domainAvailabilityArr = [{
+			let domain = parseCompletion['Web domain'];
+			let available = await checkDomainAvailability(domain);
+			// Check domain is one string (domain) or several
+			let domainAvailabilityArr = [{
 				domain: domain,
-				availability: availability
-			}]
-			let domainIndex = 0;
-			// let domain: any;
-			let domains = [];
-			console.log('flag0', domainAvailabilityArr);
-			while (domainavailibility === 'Not Available') {
-				if(domainIndex > 3) return;
-				console.log('flag3')
-				let domainsNLine = (await request("/api/genChat", {
-					chain: "get_domain",
-					prompt: {
-						product: product,
-						company_name: design_briefNLine['Company name'],
-						old_domain: domain,
-					},
-				})).result;
-
-				console.log('flag3')
-
-				console.log('genChat#flag1#domainsNLine: ', domainsNLine);
-
-				domains = domainsNLine.split('\n');
-
-				domainAvailabilityArr.push(await Promise.all(domains.map(async (dom) => {
+				availability: available
+			}];
+			parseCompletion['Web domain'] = domainAvailabilityArr;
+		} else if(chain === 'get_domain') {
+			let domains = parseCompletion.split('/n');
+			console.log('-> genChat#if get_#domains: ', domains)
+			let domainAvailabilityArr = await Promise.all(domains.map(async (domain) => {
+				if(await checkDomainAvailability(domain)) {
 					return {
-						domain: dom,
-						availability: await checkDomainAvailability(dom)
-					}
-				})));
-
-
-				domainavailibility.some((domain) => domain.availability === 'Available') ? domainavailibility = 'Available' : domainavailibility = 'Not Available';
-
-				// domainavailibility = await checkDomainAvailability(domain);
-				console.log('flag2#availibility: ', domainAvailabilityArr);
-				domainIndex++;
-			}
-
-
-			
+						availability: await checkDomainAvailability(domain),
+						domain: domain
+					};
+				}
+			}));
+			parseCompletion = domainAvailabilityArr;
 		}
+
 		
 		console.log('api/chat#parseCompletionxxxxxxxxxxxxxxxxxx: ', chain, parseCompletion)
 
@@ -218,9 +187,8 @@ export default async function(req, res) {
 	}
 }
 
-
 const checkDomainAvailability = async (domain) => {
-	console.log('checkDomainAvailability#flag1')
+	console.log('flag1#checkDomainAvailability')
 	let domainAvailibilityJson = await (await fetch(URL + domain, {
 		method: 'GET',
 		headers: {
@@ -229,6 +197,6 @@ const checkDomainAvailability = async (domain) => {
 		}
 	})).json()
 
-	console.log('checkDomainAvailability#flag2')
+	console.log('flag2#checkDomainAvailability')
 	return domainAvailibilityJson['available'] ? 'Available' : 'Not Available';
 }

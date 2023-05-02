@@ -47,7 +47,7 @@ export default function Home() {
 				<div className="flex flex-col justify-center max-w-xl px-2 gap-3">
 					<h1 className="text-4xl font-bold text-center">{t('title')}</h1>
 					<p className="text-center text-xl">{t('tagline')}</p>
-					<Link 
+					<Link
 						className="shadow-sm py-2 inline-flex justify-center font-medium items-center px-4 bg-green-600
 							text-gray-100 rounded-md hover:bg-green-700 mt-2"
 						href="/api/auth/login"

@@ -13,7 +13,7 @@ import { ObjectId } from 'mongodb';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import { useTranslation } from 'next-i18next'
 import { GetServerSidePropsContext } from 'next';
-import { UserGenModel, Generation, LogoDescription, DesighBrief} from '@/models/generation';
+import { UserGenModel, Generation, LogoDescription, DesighBrief, webDomain} from '@/models/generation';
 import clientPromise from '@/lib/mongodb';
 import FeedbackBox from '@/components/FeedbackBox';
 
@@ -197,56 +197,28 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		setGenIndex(genLen);
 		
 		try {
-			const design_briefNLine = await getDesignBrief(product);
+			let design_briefNLine = await getDesignBrief(product);
 
-			// Check Domain Availability
-			let domain = design_briefNLine['Web domain']?.replace(/(?:\\n|\n)/g, "");
-			console.log('handleCreate#domain: ', domain);
-
-			if (domain === undefined) {
-				console.log('handleCreate#domain: ', domain);
-				return;
-			}
-
-			let domainavailibility = await checkDomainAvailability(domain);
-			console.log('handleCreate#domainavailibility: ', domainavailibility);
-
-			let domainIndex = 0;
-			// let domain: any;
-			let domains = [];
-			while (domainavailibility === 'Not Available') {
-				if(domainIndex > 3) return;
-				let domainsNLine: string = (await request("/api/genChat", {
+			if (!design_briefNLine['Web domain']) return;
+			let indexDomain = 0;
+			let domainAvailable = design_briefNLine['Web domain'][indexDomain].available;
+			let getDomains: webDomain[] = design_briefNLine['Web domain'];
+			while(!domainAvailable) {
+				indexDomain++;
+				let response: webDomain[] = (await request("/api/genChat", {
 					chain: "get_domain",
 					prompt: {
 						product: product,
-						company_name: design_briefNLine['Company name'],
-						old_domain: domain,
-					},
-				})).result;
-				if (domainsNLine === undefined) {
-					console.log('handleCreate#domain#undefined: ', domainsNLine);
-					return;
-				}
-				console.log('flag1#domainsNLine: ', domainsNLine);
-				domains = domainsNLine.split('\n');
-
-				domains = domains.map(dom => dom.replace(/^\d+\.\s*/, ""));
-
-				console.log('flag1#domains: ', typeof domains, domains);
-
-				let domainAvailabilityArr = await Promise.all(domains.map(async (dom) => {
-					return {
-						domain: dom,
-						availability: await checkDomainAvailability(dom)
+						company_name: design_briefNLine['Company Name'],
+						domain: design_briefNLine['Web domain'][indexDomain].domain,
 					}
-				}));
-				
-				// domainavailibility = await checkDomainAvailability(domain);
-				console.log('flag2#availibility: ', domainAvailabilityArr);
-				domainIndex++;
+				})).result;
+				getDomains = getDomains.concat(response);
+				domainAvailable = response.some(webDom => webDom.available)
+				// let domain = design_briefNLine['Web domain'].domain.replace(/(?:\\n|\n)/g, "");
 			}
-
+			design_briefNLine['Web domain'] = getDomains;
+			
 			setDesignBrief(design_briefNLine);
 
 	
@@ -381,6 +353,34 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		setGenIndex(newIndex);
 	};
 
+	function isWebDomain(obj: any): obj is webDomain {
+    return obj && typeof obj.domain === 'string' && typeof obj.available === 'boolean';
+	}
+
+	function displayValue(value: string | boolean | string[] | webDomain[] | undefined): React.ReactNode {
+		if (typeof value === 'string' || typeof value === 'boolean') {
+			return <>{String(value)}</>;
+		} else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string') {
+			return <>{value.join(', ')}</>;
+		} else if (Array.isArray(value) && value.length > 0 && isWebDomain(value[0])) {
+			return displayWebDomains(value as webDomain[]);
+		} else {
+			return null;
+		}
+	}
+
+	function displayWebDomains(webDomains: webDomain[]): JSX.Element {
+		return (
+			<>
+				{webDomains.map((webDomain, index) => (
+					<p key={index}>
+						{webDomain.domain}: {webDomain.available ? 'Available' : 'Not Available'}
+					</p>
+				))}
+			</>
+		);
+	}
+
 	useEffect(() => {
     if (genIndex === genLen) {
       setDescription({});
@@ -488,10 +488,10 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 								) : typeof designBrief === 'object' && designBrief !== null ? (
 									<>
 										{Object.entries(designBrief).map(([key, value]) => (
-											<p key={key}>
-												<strong>{key}:</strong> {value}
-												<br/>
-											</p>
+												<p key={key}>
+														<strong>{key}:</strong> {displayValue(value)}
+														<br />
+												</p>
 										))}
 									</>
 								): <p>There was an error. Please try again or send a message to feedback.</p>}
