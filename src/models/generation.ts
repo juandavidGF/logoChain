@@ -11,7 +11,8 @@ export interface webDomain {
 	available: boolean;
 }
 
-export interface DesighBrief {	
+export interface DesighBrief {
+	Product?: string;
 	"Company Name"?: string;
 	"Web domain"?: webDomain[];
 	"Target Audience"?: string;

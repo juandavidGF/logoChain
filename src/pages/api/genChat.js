@@ -7,6 +7,8 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
+const domainCheckerURL = 'https://domain-checker7.p.rapidapi.com/whois?domain=';
+
 export default async function(req, res) {
 	if (req.method !== 'POST') {
     res.status(405).send({ error: 'Only POST requests allowed' })
@@ -18,9 +20,7 @@ export default async function(req, res) {
 	const { chain } = body;
 	const { prompt } = body;
 
-	// console.log('chat#chain', chain);
-	// console.log('chat#prompt', prompt);
-	console.log('api/chat#chain inputxxxxxxxxxx:  ', chain, 'prompt: ', prompt)
+	console.log('api/chat#chain inputxxxxxxxxxx:  ', chain, 'prompt: ', prompt);
 
 	try {
 		let content;
@@ -91,10 +91,11 @@ export default async function(req, res) {
 					content = `product: ${prompt.product},
 					company_name: ${prompt.company_name},
 
-					suggest web domains different than ${domainAvailabilityArr[domainIndex]['domain']}. and related with the company name and product.`;
+					suggest 3 web domains different than ${prompt.domain} than doesnt exist. and related with the company name and product.`;
+					break;
 			default:
 				throw new Error('chain not supported');
-		}		
+		}
 		// const content = chain === "company_name" ?
 		// 		`What is a good name for a company that makes: ${prompt}?`
 		// 	: chain === "company_slogan_tagline_domains" ?
@@ -136,7 +137,7 @@ export default async function(req, res) {
 
 		// 					` :(() => { throw new Error('chain not supported') })();
 
-		console.log('chat#chain after switch: ', chain)
+		console.log('chat#chain after case switch: ', chain)
 	
 		const completion = await openai.createChatCompletion({
 			// model: "gpt-4",
@@ -153,33 +154,33 @@ export default async function(req, res) {
 				: completion.data.choices[0].message.content
 
 		console.log('flag#parseCompletion: ', parseCompletion)
-
 		
 		if(chain === 'design_brief') {
 			let domain = parseCompletion['Web domain'];
+			console.log('-> genChat#if design_brief#domain: ', domain);
 			let available = await checkDomainAvailability(domain);
 			// Check domain is one string (domain) or several
 			let domainAvailabilityArr = [{
 				domain: domain,
-				availability: available
+				available: available
 			}];
 			parseCompletion['Web domain'] = domainAvailabilityArr;
 		} else if(chain === 'get_domain') {
-			let domains = parseCompletion.split('/n');
-			console.log('-> genChat#if get_#domains: ', domains)
+			let domains = parseCompletion.split('\n').map(dom => dom.replace(/^\d+\. /, ""));
+			if (domains.length > 3) domains = domains.slice(0, 3);
+			console.log('-> genChat#if get_#domains: ', domains);
 			let domainAvailabilityArr = await Promise.all(domains.map(async (domain) => {
 				if(await checkDomainAvailability(domain)) {
 					return {
-						availability: await checkDomainAvailability(domain),
+						available: await checkDomainAvailability(domain),
 						domain: domain
 					};
 				}
 			}));
 			parseCompletion = domainAvailabilityArr;
 		}
-
 		
-		console.log('api/chat#parseCompletionxxxxxxxxxxxxxxxxxx: ', chain, parseCompletion)
+		console.log('api/chat#parseCompletionxxxxxxxxxxxxxxxxxx: ', chain, parseCompletion);
 
 		res.status(200).json({ result: parseCompletion });
 	} catch (error) {
@@ -188,15 +189,17 @@ export default async function(req, res) {
 }
 
 const checkDomainAvailability = async (domain) => {
-	console.log('flag1#checkDomainAvailability')
-	let domainAvailibilityJson = await (await fetch(URL + domain, {
+	console.log('flag1#checkDomainAvailability');
+	let domainAvailibilityRaw = await fetch(domainCheckerURL + domain, {
 		method: 'GET',
 		headers: {
-			'X-RapidAPI-Key': 'd72216071emshf4385a59c5c084ap176d62jsn306b5e377ec5',
+			'X-RapidAPI-Key': '88f776988dmsh41ac2684d74dc62p1ae6cfjsnf30e25c54f8c',
 			'X-RapidAPI-Host': 'domain-checker7.p.rapidapi.com'
 		}
-	})).json()
+	})
+	
+	const domainAvailibility = await domainAvailibilityRaw.json();
 
-	console.log('flag2#checkDomainAvailability')
-	return domainAvailibilityJson['available'] ? 'Available' : 'Not Available';
+	console.log('flag2#checkDomainAvailability', domainAvailibility);
+	return domainAvailibility['available'] ? 'Available' : 'Not Available';
 }

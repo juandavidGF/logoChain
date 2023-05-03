@@ -1,23 +1,23 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
+import Head from 'next/head';
+import Image from 'next/image';
+import { Inter } from 'next/font/google';
 import { useState , useRef, useEffect } from "react";
 import cn from "classnames";
 import { getSession, withPageAuthRequired } from '@auth0/nextjs-auth0';
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/router';
 import { Upload as UploadIcon, ChevronLeft, ChevronLeftSquare, ChevronRightSquare } from "lucide-react";
 import { Download as DownloadIcon } from "lucide-react";
-import Link from 'next/link'
+import Link from 'next/link';
 import { ObjectId } from 'mongodb';
 
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
-import { useTranslation } from 'next-i18next'
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { useTranslation } from 'next-i18next';
 import { GetServerSidePropsContext } from 'next';
 import { UserGenModel, Generation, LogoDescription, DesighBrief, webDomain} from '@/models/generation';
 import clientPromise from '@/lib/mongodb';
 import FeedbackBox from '@/components/FeedbackBox';
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] });
 
 interface User {
   name: string;
@@ -199,22 +199,25 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		try {
 			let design_briefNLine = await getDesignBrief(product);
 
+			// #.
 			if (!design_briefNLine['Web domain']) return;
 			let indexDomain = 0;
 			let domainAvailable = design_briefNLine['Web domain'][indexDomain].available;
 			let getDomains: webDomain[] = design_briefNLine['Web domain'];
 			while(!domainAvailable) {
-				indexDomain++;
 				let response: webDomain[] = (await request("/api/genChat", {
 					chain: "get_domain",
 					prompt: {
 						product: product,
-						company_name: design_briefNLine['Company Name'],
+						company_name: design_briefNLine['Company name'],
 						domain: design_briefNLine['Web domain'][indexDomain].domain,
 					}
 				})).result;
 				getDomains = getDomains.concat(response);
+				console.log('!domainAvailable#getDomains', getDomains);
 				domainAvailable = response.some(webDom => webDom.available)
+				console.log(domainAvailable)
+				indexDomain++;
 				// let domain = design_briefNLine['Web domain'].domain.replace(/(?:\\n|\n)/g, "");
 			}
 			design_briefNLine['Web domain'] = getDomains;
@@ -283,21 +286,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		}
 	}
 
-	const checkDomainAvailability = async (domain: string) => {
-		let domainAvailibilityJson = await (await fetch('/api/domain/check', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				domain: domain
-			}),
-		})).json();
-		return domainAvailibilityJson['available'] ? 'Available' : 'Not Available';
-	}
-
 	const saveGeneration = async (images: string[], design_brief: DesighBrief, logo_description_brief: any, logo_description_why: any) => {
-
 		if(!user?.name) return;
 		if(!user?.email) return;
 		
@@ -358,11 +347,12 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	}
 
 	function displayValue(value: string | boolean | string[] | webDomain[] | undefined): React.ReactNode {
-		if (typeof value === 'string' || typeof value === 'boolean') {
+		if (typeof value === 'string') {
 			return <>{String(value)}</>;
 		} else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string') {
 			return <>{value.join(', ')}</>;
 		} else if (Array.isArray(value) && value.length > 0 && isWebDomain(value[0])) {
+			console.log('value', value)
 			return displayWebDomains(value as webDomain[]);
 		} else {
 			return null;
@@ -370,9 +360,28 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	}
 
 	function displayWebDomains(webDomains: webDomain[]): JSX.Element {
+		const webDomainsMock= [
+			{
+					"domain": "mmxkdesignstudio.com",
+					"availability": "Available"
+			},
+			{
+					"available": "Available",
+					"domain": "mmxkcreative.com"
+			},
+			{
+					"available": "Not Available",
+					"domain": "xkstudio.com"
+			},
+			{
+					"available": "Available",
+					"domain": "mmxkdesigns.com"
+			}
+	]
 		return (
 			<>
-				{webDomains.map((webDomain, index) => (
+				{webDomainsMock}
+				{webDomainsMock.map((webDomain, index) => (
 					<p key={index}>
 						{webDomain.domain}: {webDomain.available ? 'Available' : 'Not Available'}
 					</p>
