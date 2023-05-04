@@ -79,13 +79,13 @@ export default async function(req, res) {
 					`;
 					break;
 				case "logo_description_why":
-					content = `product: ${prompt.product},
+					content = `product: [${prompt.product}],
 					design brief: ${prompt.design_brief},
 					icon composition: ${prompt.logo_description_brief},
 
 					Baed in the last information,
 
-					in least than 30 words, explain why you choose the icon composition.`;
+					in the language used in the "product response [ ]", in least than 30 words, explain why you choose the icon composition`;
 					break;
 				case "get_domain":
 					content = `product: ${prompt.product},

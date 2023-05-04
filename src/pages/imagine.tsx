@@ -198,8 +198,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		
 		try {
 			let design_briefNLine = await getDesignBrief(product);
-
-			// #.
+			
 			if (!design_briefNLine['Web domain']) return;
 			let indexDomain = 0;
 			let domainAvailable = design_briefNLine['Web domain'][indexDomain].available;
@@ -222,7 +221,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			design_briefNLine['Web domain'] = getDomains;
 			
 			setDesignBrief(design_briefNLine);
-
 	
 			const logo_description_brief = await getCompanyLogoDescription(product, JSON.stringify(design_briefNLine));
 			setDescription(logo_description_brief);
@@ -471,21 +469,22 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 						</div>
 						{images.length > 0 ? (
 							<div className='justify-start'>
-								{/* <p className='text-gray-400'>name: <span className="text-black text-sm">{name}</span></p> */}
-								{/* <p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: sloganTaglineDomains}}/></p> */}
 								<p className='text-gray-400'><span className="text-black text-sm"><strong>Product:</strong> {product}</span></p>
 								{(typeof designBrief === 'string' && designBrief.length > 0) ? (
 									<p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: designBrief}}/><br/></p>
 								) : typeof designBrief === 'object' && designBrief !== null ? (
 									<>
 										{Object.entries(designBrief).map(([key, value]) => (
-												<p key={key}>
-														<strong>{key}:</strong> {displayValue(value)}
-														<br />
-												</p>
+											<div className='text-sm' key={key}>
+												<strong>{key}:</strong> {displayValue(value)}
+												<br />
+											</div>
 										))}
 									</>
 								): <p>There was an error. Please try again or send a message to feedback.</p>}
+								{user.email === 'davad701@gmail.com' ? (
+									<p className='text-gray-400'><span className="text-black text-sm"><strong>Logo Prompt:</strong> {description as string}</span></p>
+								) : null}
 								<p className='text-gray-400'><span className="text-black text-sm"><strong>Logo composition:</strong> {logoDescriptionWhy}</span></p><br/>
 							</div>
 						) : null }
