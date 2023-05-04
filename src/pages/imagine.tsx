@@ -351,7 +351,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		} else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string') {
 			return <>{value.join(', ')}</>;
 		} else if (Array.isArray(value) && value.length > 0 && isWebDomain(value[0])) {
-			console.log('value', value)
 			return displayWebDomains(value as webDomain[]);
 		} else {
 			return null;
@@ -363,8 +362,8 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			<>
 				{webDomains.map((webDomain, index) => (
 					webDomain ? (<div className='flex flex-row' key={index}>
-						<p>{webDomain.domain}</p>
-						<p className='ml-1 mt-1.5'>{webDomain.available ? <CheckCircle2 color='green' size={18} strokeWidth={2} /> : <XCircle color='red' size={18} />}</p>
+						<div>{webDomain.domain}</div>
+						<div className='ml-1 mt-1.5'>{webDomain.available ? <CheckCircle2 color='green' size={18} strokeWidth={2} /> : <XCircle color='red' size={18} />}</div>
 					</div>) : null
 				))}
 			</>
@@ -383,6 +382,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
     setDesignBrief(generations[genIndex].designBrief);
     setDescription(generations[genIndex].description);
 		setLogoDescriptionWhy(generations[genIndex].logoDescriptionWhy);
+		setProduct(generations[genIndex].product);
   }, [genIndex]);
 
   return (
@@ -473,6 +473,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 							<div className='justify-start'>
 								{/* <p className='text-gray-400'>name: <span className="text-black text-sm">{name}</span></p> */}
 								{/* <p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: sloganTaglineDomains}}/></p> */}
+								<p className='text-gray-400'><span className="text-black text-sm"><strong>Product:</strong> {product}</span></p>
 								{(typeof designBrief === 'string' && designBrief.length > 0) ? (
 									<p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: designBrief}}/><br/></p>
 								) : typeof designBrief === 'object' && designBrief !== null ? (

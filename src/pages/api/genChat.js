@@ -47,13 +47,13 @@ export default async function(req, res) {
 			case "design_brief":
 				content = `product description: ${prompt.product}
 				
-				Based on the given product description, give me a design brief with the next items:
+				Based on the given product description, give me a design brief with the next items, and please respond just the [response] in the language used for the product description, but the :
 
-				Company name:
-				Web domain:
-				Target audience:
-				slogan:
-				tagline:`;
+				Company name: [response]
+				Web domain: [response]
+				Target audience: [response]
+				slogan: [response]
+				tagline: [response]`;
 				break;
 			case "logo_description_brief_+why":
 				content = `product: ${prompt.product},
@@ -129,7 +129,7 @@ export default async function(req, res) {
 		// 					I need two items based in the last information, and respond in this format,
 
 		// 					Prompt: ,
-		// 					Why: 
+		// 					Why:
 
     //           the Promt describe a icon with minues than 30 words based an imaginary combined analogy concept like some object, animal or geometry figure, specify the form, background, elemtens, shapes, features, style, colors, ubication of each element, symetry, and not use the company name or product name in the description
 
@@ -166,7 +166,7 @@ export default async function(req, res) {
 			}];
 			parseCompletion['Web domain'] = domainAvailabilityArr;
 		} else if(chain === 'get_domain') {
-			let domains = parseCompletion.split('\n').map(dom => dom.replace(/^\d+\. /, ""));
+			let domains = parseCompletion.split('\n').map(dom => extractDomain(dom));
 			if (domains.length > 3) domains = domains.slice(0, 3);
 			console.log('-> genChat#if get_#domains: ', domains);
 			let domainAvailabilityArr = await Promise.all(domains.map(async (domain) => {
@@ -194,7 +194,7 @@ const checkDomainAvailability = async (domain) => {
 	let domainAvailibilityRaw = await fetch(domainCheckerURL + domain, {
 		method: 'GET',
 		headers: {
-			'X-RapidAPI-Key': '88f776988dmsh41ac2684d74dc62p1ae6cfjsnf30e25c54f8c',
+			'X-RapidAPI-Key': '865a60322emsh190b1e5d1514b87p1486e9jsnc6b6b777b188',
 			'X-RapidAPI-Host': 'domain-checker7.p.rapidapi.com'
 		}
 	})
@@ -203,4 +203,18 @@ const checkDomainAvailability = async (domain) => {
 
 	console.log('flag2#checkDomainAvailability', domainAvailibility);
 	return domainAvailibility['available'] && domainAvailibility['valid'];
+}
+
+function extractDomain(input) {
+  // Split the input string by space
+  const parts = input.split(' ');
+
+  // Check if the first letter of the first part is a number
+  if (/^\d/.test(parts[0])) {
+    // Return the second part if the first part starts with a number
+    return parts[1];
+  } else {
+    // Otherwise, return the first part
+    return parts[0];
+  }
 }
