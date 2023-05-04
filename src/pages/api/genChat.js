@@ -79,13 +79,14 @@ export default async function(req, res) {
 					`;
 					break;
 				case "logo_description_why":
-					content = `product: [${prompt.product}],
+					content = `product: -> response: [${prompt.product}],
 					design brief: ${prompt.design_brief},
 					icon composition: ${prompt.logo_description_brief},
 
 					Baed in the last information,
 
-					in the language used in the "product response [ ]", in least than 30 words, explain why you choose the icon composition`;
+					think step by step, and Identify the language used for the product response in the [ ], and use thas language to respond me why the icon composition was choosen
+					`;
 					break;
 				case "get_domain":
 					content = `product: ${prompt.product},
