@@ -7,7 +7,7 @@ export interface LogoDescription {
 }
 
 export interface webDomain {
-	domain: string;
+	domain: string | any;
 	available: boolean;
 }
 

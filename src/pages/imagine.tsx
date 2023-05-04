@@ -5,7 +5,7 @@ import { useState , useRef, useEffect } from "react";
 import cn from "classnames";
 import { getSession, withPageAuthRequired } from '@auth0/nextjs-auth0';
 import { useRouter } from 'next/router';
-import { Upload as UploadIcon, ChevronLeft, ChevronLeftSquare, ChevronRightSquare } from "lucide-react";
+import { Upload as UploadIcon, ChevronLeft, ChevronLeftSquare, ChevronRightSquare, CheckCircle2, XCircle } from "lucide-react";
 import { Download as DownloadIcon } from "lucide-react";
 import Link from 'next/link';
 import { ObjectId } from 'mongodb';
@@ -218,7 +218,6 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 				domainAvailable = response.some(webDom => webDom.available)
 				console.log(domainAvailable)
 				indexDomain++;
-				// let domain = design_briefNLine['Web domain'].domain.replace(/(?:\\n|\n)/g, "");
 			}
 			design_briefNLine['Web domain'] = getDomains;
 			
@@ -360,31 +359,13 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	}
 
 	function displayWebDomains(webDomains: webDomain[]): JSX.Element {
-		const webDomainsMock= [
-			{
-					"domain": "mmxkdesignstudio.com",
-					"availability": "Available"
-			},
-			{
-					"available": "Available",
-					"domain": "mmxkcreative.com"
-			},
-			{
-					"available": "Not Available",
-					"domain": "xkstudio.com"
-			},
-			{
-					"available": "Available",
-					"domain": "mmxkdesigns.com"
-			}
-	]
 		return (
 			<>
-				{webDomainsMock}
-				{webDomainsMock.map((webDomain, index) => (
-					<p key={index}>
-						{webDomain.domain}: {webDomain.available ? 'Available' : 'Not Available'}
-					</p>
+				{webDomains.map((webDomain, index) => (
+					webDomain ? (<div className='flex flex-row' key={index}>
+						<p>{webDomain.domain}</p>
+						<p className='ml-1 mt-1.5'>{webDomain.available ? <CheckCircle2 color='green' size={18} strokeWidth={2} /> : <XCircle color='red' size={18} />}</p>
+					</div>) : null
 				))}
 			</>
 		);

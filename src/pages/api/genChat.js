@@ -172,11 +172,12 @@ export default async function(req, res) {
 			let domainAvailabilityArr = await Promise.all(domains.map(async (domain) => {
 				if(await checkDomainAvailability(domain)) {
 					return {
-						available: await checkDomainAvailability(domain),
-						domain: domain
+						domain: domain,
+						available: await checkDomainAvailability(domain)
 					};
 				}
 			}));
+			domainAvailabilityArr = domainAvailabilityArr.filter(domain => domain !== undefined);
 			parseCompletion = domainAvailabilityArr;
 		}
 		
@@ -201,5 +202,5 @@ const checkDomainAvailability = async (domain) => {
 	const domainAvailibility = await domainAvailibilityRaw.json();
 
 	console.log('flag2#checkDomainAvailability', domainAvailibility);
-	return domainAvailibility['available'] ? 'Available' : 'Not Available';
+	return domainAvailibility['available'] && domainAvailibility['valid'];
 }
