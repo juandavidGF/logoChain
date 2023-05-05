@@ -31,7 +31,7 @@ export default async function handler(
 		const response = await (await fetch(URL + domain, {
 			method: 'GET',
 			headers: {
-				'X-RapidAPI-Key': 'd72216071emshf4385a59c5c084ap176d62jsn306b5e377ec5',
+				'X-RapidAPI-Key': 'c515399fb5msha53880bec6a1137p116da9jsne61de488081f',
 				'X-RapidAPI-Host': 'domain-checker7.p.rapidapi.com'
 			}
 		})).json()

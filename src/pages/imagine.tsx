@@ -93,7 +93,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	const [images, setImages] = useState<string[]>([]);
 	const [canShowImage, setCanShowImage] = useState(false);
 	const [name, setName] = useState("");
-	const [description, setDescription] = useState<Partial<LogoDescription | string>>({});
+	const [description, setDescription] = useState<string>("");
 	const [sloganTaglineDomains, setsLoganTaglineDomains] = useState("");
 	const [designBrief, setDesignBrief] = useState<DesighBrief | string>("");
 	const [generations, setGenerations] = useState<Generation[]>(userGen.generation);
@@ -137,7 +137,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	};
 
 	
-	const getCompanyLogoDescription = async (product: string, design_brief: string): Promise<LogoDescription | string> => {
+	const getCompanyLogoDescription = async (product: string, design_brief: string): Promise<string> => {
 		const payload: RequestPayload = {
 			chain: "logo_description_brief",
 			prompt: {
@@ -199,7 +199,10 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		try {
 			let design_briefNLine = await getDesignBrief(product);
 			
-			if (!design_briefNLine['Web domain']) return;
+			if (!design_briefNLine['Web domain']) {
+				setLoading(false);
+				return;
+			};
 			let indexDomain = 0;
 			let domainAvailable = design_briefNLine['Web domain'][indexDomain].available;
 			let getDomains: webDomain[] = design_briefNLine['Web domain'];
@@ -279,6 +282,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			setCanShowImage(true);
 		} catch (error) {
 			console.log('error: ', error);
+			setLoading(false);
 			return;
 		}
 	}
@@ -350,10 +354,14 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			return <>{value.join(', ')}</>;
 		} else if (Array.isArray(value) && value.length > 0 && isWebDomain(value[0])) {
 			return displayWebDomains(value as webDomain[]);
+		} else if (typeof value === 'object' && value !== null && Object.keys(value).length === 0) { // Añadido para manejar objetos vacíos
+			return <>Error: Empty object found</>;
 		} else {
+			console.warn('Unexpected value type:', value);
 			return null;
 		}
 	}
+	
 
 	function displayWebDomains(webDomains: webDomain[]): JSX.Element {
 		return (
@@ -370,7 +378,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 
 	useEffect(() => {
     if (genIndex === genLen) {
-      setDescription({});
+      setDescription("");
       setDesignBrief('');
       setImages([]);
 			return;
@@ -467,27 +475,25 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 								</>
 							) : null}
 						</div>
-						{images.length > 0 ? (
-							<div className='justify-start'>
-								<p className='text-gray-400'><span className="text-black text-sm"><strong>Product:</strong> {product}</span></p>
-								{(typeof designBrief === 'string' && designBrief.length > 0) ? (
-									<p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: designBrief}}/><br/></p>
-								) : typeof designBrief === 'object' && designBrief !== null ? (
-									<>
-										{Object.entries(designBrief).map(([key, value]) => (
-											<div className='text-sm' key={key}>
-												<strong>{key}:</strong> {displayValue(value)}
-												<br />
-											</div>
-										))}
-									</>
-								): <p>There was an error. Please try again or send a message to feedback.</p>}
-								{user.email === 'davad701@gmail.com' ? (
-									<p className='text-gray-400'><span className="text-black text-sm"><strong>Logo Prompt:</strong> {description as string}</span></p>
-								) : null}
-								<p className='text-gray-400'><span className="text-black text-sm"><strong>Logo composition:</strong> {logoDescriptionWhy}</span></p><br/>
-							</div>
-						) : null }
+						<div className='justify-start'>
+							{product ? <p className='text-gray-400'><span className="text-black text-sm"><strong>Product:</strong> {product}</span></p> : null}
+							{(typeof designBrief === 'string' && designBrief.length > 0) ? (
+								<p className='text-gray-400'><span className="text-black text-sm" dangerouslySetInnerHTML={{__html: designBrief}}/><br/></p>
+							) : typeof designBrief === 'object' && designBrief !== null ? (
+								<>
+									{Object.entries(designBrief).map(([key, value]) => (
+										<div className='text-sm' key={key}>
+											<strong>{key}:</strong> {displayValue(value)}
+											<br />
+										</div>
+									))}
+								</>
+							): null}
+							{user.email === 'davad701@gmail.com' && description ? (
+								<p className='text-gray-400'><span className="text-black text-sm"><strong>Logo Prompt:</strong> {description}</span></p>
+							) : null}
+							{logoDescriptionWhy ? <p className='text-gray-400'><span className="text-black text-sm"><strong>Logo composition:</strong> {logoDescriptionWhy}</span><br/></p> : null}
+						</div>
 						<div className="grid grid-cols-2 gap-1 mt-2 mb-10">
 							{images.length > 0 ? (
 								images.map((url, index) => (

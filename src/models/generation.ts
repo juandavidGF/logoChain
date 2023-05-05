@@ -26,7 +26,7 @@ export interface Generation {
 	createdDate: number;
   product: string;
   images: string[];
-  description: string | LogoDescription;
+  description: string;
   designBrief: DesighBrief | string;
 	logoDescriptionWhy: string;
 }
