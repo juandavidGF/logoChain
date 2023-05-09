@@ -35,40 +35,57 @@ export default async function(req, res) {
 			case "logo_description":
 				content = `take this examples of prompts for dall-e to create nice icon/logs:
 
-				1. Modern startup logo with no text, symmetrical, minimalistic, speed flash fast grocery delivery icon, centered, gradient, dark background.
-				2. appicon style, Create a minimalistic and modern logo for a blog post titled 'Maximizing Efficiency as an Indie Entrepreneur: Time Management and Prioritization Tips'. The logo should represent the concepts of time management, productivity, and entrepreneurship., flat icon
-				3. a tech company new logo, minimalistic, geometric, futuristic, stable diffusion, trending on artstation, sharp focus, studio photo, intricate details, highly detailed, by greg rutkowski.
-				4. A cute blue baby birdie, logo in a dark circle as the background, vibrant, adorable, bubbles, cheerful.
-				5. A slanting rectangle shape in red and black minimal logo in dark circle as the background, vibrant, 3d isomorphic.
+					1. Modern startup logo with no text, symmetrical, minimalistic, speed flash fast grocery delivery icon, centered, gradient, dark background.
+					2. appicon style, Create a minimalistic and modern logo for a blog post titled 'Maximizing Efficiency as an Indie Entrepreneur: Time Management and Prioritization Tips'. The logo should represent the concepts of time management, productivity, and entrepreneurship., flat icon
+					3. a tech company new logo, minimalistic, geometric, futuristic, stable diffusion, trending on artstation, sharp focus, studio photo, intricate details, highly detailed, by greg rutkowski.
+					4. A cute blue baby birdie, logo in a dark circle as the background, vibrant, adorable, bubbles, cheerful.
+					5. A slanting rectangle shape in red and black minimal logo in dark circle as the background, vibrant, 3d isomorphic.
+					
+					Now try to combine the features for the company: ${prompt.company_name}, and product: ${prompt.product}, to reflect the brand, and create a new and simple prompt for the logo/icon.
+					And please specify that the logo must not contain letters.
+					`;
+				break;
+			case "design_brief_2":
+				content = `product description: ${prompt.product}
 				
-				Now try to combine the features for the company: ${prompt.company_name}, and product: ${prompt.product}, to reflect the brand, and create a new and simple prompt for the logo/icon.
-				And please specify that the logo must not contain letters.
-				`;
+					Based on the given product description, provide design brief elements:
+
+					Company name: [response]
+					Web domain: [response]
+					Target audience: [response]
+					slogan: [response]
+					tagline: [response]
+					
+					please make the suggestions for the [response] in the language used for the product description`;
 				break;
 			case "design_brief":
 				content = `product description: ${prompt.product}
 				
-				Based on the given product description, give me a design brief with the next items, and please respond just the [response] in the language used for the product description, but the :
+					Based in the last information suggest the next design brief elements, and use the original language used for the product description:
 
-				Company name: [response]
-				Web domain: [response]
-				Target audience: [response]
-				slogan: [response]
-				tagline: [response]`;
-				break;
+					1. Company name:
+					2. Web domain:
+					3. Target audience:
+					4. slogan:
+					5. tagline:
+
+					example
+					n. element: [response in the original language]
+					`;
+				break
 			case "logo_description_brief_+why":
 				content = `product: ${prompt.product},
-				design brief: ${prompt.design_brief},
+					design brief: ${prompt.design_brief},
 
-				I need two items based on the last information and respond in this format:
+					I need two items based on the last information and respond in this format:
 
-				Prompt: ,
-				Why:
+					Prompt: ,
+					Why:
 
-				The Prompt should describe an icon with fewer than 30 words based on an imaginary combined analogy concept like some object, animal, or geometry figure. Specify the form, background, elements, shapes, features, style, colors, location of each element, symmetry, and do not use the company name or product name in the description.
+					The Prompt should describe an icon with fewer than 30 words based on an imaginary combined analogy concept like some object, animal, or geometry figure. Specify the form, background, elements, shapes, features, style, colors, location of each element, symmetry, and do not use the company name or product name in the description.
 
-				The Why is the reason behind the prompt icon composition.
-				`;
+					The Why is the reason behind the prompt icon composition.
+					`;
 				break;
 				case "logo_description_brief":
 					content = `product: ${prompt.product},
@@ -147,7 +164,7 @@ export default async function(req, res) {
 			messages: [{ "role": "system", "content": content }]
 		});
 
-		// console.log('chat#completionxxxxxxxxx: ', completion.data.choices[0].message.content)
+		console.log('chat#completionxxxxxxxxx: ', completion.data.choices[0].message.content)
 
 		let parseCompletion = chain === 'logo_description_brief_+why' ?
 			parseBrandInfo(completion.data.choices[0].message.content, chain)

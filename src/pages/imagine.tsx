@@ -381,6 +381,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
       setDescription("");
       setDesignBrief('');
       setImages([]);
+			setLogoDescriptionWhy("")
 			return;
     }
 
