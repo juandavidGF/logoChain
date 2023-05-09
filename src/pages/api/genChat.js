@@ -1,5 +1,6 @@
 import { Configuration, OpenAIApi } from "openai";
 import { parseBrandInfo } from '@/utils/parseResponse';
+import isDomainAvailable from '@/utils/isDomainAvailable';
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -159,7 +160,7 @@ export default async function(req, res) {
 		if(chain === 'design_brief') {
 			let domain = parseCompletion['Web domain'];
 			console.log('-> genChat#if design_brief#domain: ', domain);
-			let available = await checkDomainAvailability(domain);
+			let available = await isDomainAvailable(domain);
 			// Check domain is one string (domain) or several
 			let domainAvailabilityArr = [{
 				domain: domain,
@@ -171,10 +172,11 @@ export default async function(req, res) {
 			if (domains.length > 3) domains = domains.slice(0, 3);
 			console.log('-> genChat#if get_#domains: ', domains);
 			let domainAvailabilityArr = await Promise.all(domains.map(async (domain) => {
-				if(await checkDomainAvailability(domain)) {
+				let available = await isDomainAvailable(domain)
+				if(available) {
 					return {
 						domain: domain,
-						available: await checkDomainAvailability(domain)
+						available: available
 					};
 				}
 			}));
@@ -191,6 +193,21 @@ export default async function(req, res) {
 }
 
 const checkDomainAvailability = async (domain) => {
+	console.log('flag1#checkDomainAvailability');
+	let domainAvailibilityRaw = await fetch("/api/domain/checkDomain?domain=" + domain, {
+		method: 'GET',
+		headers: {
+			
+		}
+	})
+	
+	const domainAvailibility = await domainAvailibilityRaw.json();
+
+	console.log('flag2#checkDomainAvailability', domainAvailibility);
+	return domainAvailibility['available'] && domainAvailibility['valid'];
+}
+
+const checkDomainAvailabilityRapidApi = async (domain) => {
 	console.log('flag1#checkDomainAvailability');
 	let domainAvailibilityRaw = await fetch(domainCheckerURL + domain, {
 		method: 'GET',
