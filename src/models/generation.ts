@@ -14,7 +14,7 @@ export interface webDomain {
 export interface DesighBrief {
 	Product?: string;
 	"Company Name"?: string;
-	"Web domain"?: webDomain[];
+	"Web domain"?: webDomain[] | string;
 	"Target Audience"?: string;
 	Slogan?: string;
 	Tagline?: string;

@@ -1,5 +1,5 @@
 import { Configuration, OpenAIApi } from "openai";
-import { parseBrandInfo } from '@/utils/parseResponse';
+import { parseBrandInfo, parseDesignBrief } from '@/utils/parseResponse';
 import isDomainAvailable from '@/utils/isDomainAvailable';
 
 const configuration = new Configuration({
@@ -59,18 +59,21 @@ export default async function(req, res) {
 					please make the suggestions for the [response] in the language used for the product description`;
 				break;
 			case "design_brief":
-				content = `product description: ${prompt.product}
-				
-					Based in the last information suggest the next design brief elements, and use the original language used for the product description:
+				content = `
+					Product: "${prompt.product}",
+					What is the product referred to in the quotes?,  and What is the written language used?
 
+					Once you have identified the language just using it language, what could be a good suggestions for the following design brief elements for the product:
+										
 					1. Company name:
 					2. Web domain:
 					3. Target audience:
-					4. slogan:
-					5. tagline:
+					4. Slogan:
+					5. Tagline:
 
-					example
-					n. element: [response in the original language]
+					Please just use the language identified for the suggestions and explication, not use other languages, just the one identified, ok? 
+
+					did you use that language?
 					`;
 				break
 			case "logo_description_brief_+why":
@@ -156,6 +159,7 @@ export default async function(req, res) {
 
 		// 					` :(() => { throw new Error('chain not supported') })();
 
+		console.log('chat#product: ', prompt.product)
 		console.log('chat#chain after case switch: ', chain)
 	
 		const completion = await openai.createChatCompletion({
@@ -164,12 +168,12 @@ export default async function(req, res) {
 			messages: [{ "role": "system", "content": content }]
 		});
 
-		console.log('chat#completionxxxxxxxxx: ', completion.data.choices[0].message.content)
+		console.log('chat#completionxxxxxxxxx: ', completion.data.choices[0].message.content);
 
 		let parseCompletion = chain === 'logo_description_brief_+why' ?
 			parseBrandInfo(completion.data.choices[0].message.content, chain)
 			: chain === 'design_brief' ?
-				parseBrandInfo(completion.data.choices[0].message.content, chain)
+				parseDesignBrief(completion.data.choices[0].message.content, chain)
 				: completion.data.choices[0].message.content
 
 		console.log('flag#parseCompletion: ', parseCompletion)
@@ -207,21 +211,6 @@ export default async function(req, res) {
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
-}
-
-const checkDomainAvailability = async (domain) => {
-	console.log('flag1#checkDomainAvailability');
-	let domainAvailibilityRaw = await fetch("/api/domain/checkDomain?domain=" + domain, {
-		method: 'GET',
-		headers: {
-			
-		}
-	})
-	
-	const domainAvailibility = await domainAvailibilityRaw.json();
-
-	console.log('flag2#checkDomainAvailability', domainAvailibility);
-	return domainAvailibility['available'] && domainAvailibility['valid'];
 }
 
 const checkDomainAvailabilityRapidApi = async (domain) => {

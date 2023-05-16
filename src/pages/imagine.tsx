@@ -378,6 +378,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 
 	useEffect(() => {
     if (genIndex === genLen) {
+			setProduct("");
       setDescription("");
       setDesignBrief('');
       setImages([]);

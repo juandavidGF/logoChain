@@ -1,7 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
 
-import { parseBrandInfo } from 	'@/utils/parseResponse';
+import { parseBrandInfo, parseDesignBrief } from 	'@/utils/parseResponse';
 
 type Data = {
   parsed: {};
@@ -12,11 +12,10 @@ export default function handler(
   res: NextApiResponse<Data>
 ) {
 
-	const chain = "design_brief";
-	const designBriefBr = "Company Name: Hola Co.<br/>Web domain: www.holaco.com<br/>Target Audience: Multicultural individuals interested in exploring new cultures, traditions and languages.<br/>Slogan: Explore the world with us.<br/>Tagline: Connecting cultures, one Hola at a time.";
-	const designBriefNLine = designBriefBr.replace(/<br\/>/g, '\n');
+	
+	const parsed = parseDesignBrief("");
 
-	const parsed = parseBrandInfo(designBriefNLine);
+	console.log(parsed)
 
 	// console.log('tet/parser#parsed', parsed);
 
