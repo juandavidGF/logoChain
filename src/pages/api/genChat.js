@@ -104,7 +104,7 @@ export default async function(req, res) {
 					design brief: ${prompt.design_brief},
 					icon composition: ${prompt.logo_description_brief},
 
-					Baed in the last information,
+					Based in the last information,
 
 					think step by step, and Identify the language used for the product response in the [ ], and use thas language to respond me why the icon composition was choosen
 					`;
@@ -209,6 +209,7 @@ export default async function(req, res) {
 
 		res.status(200).json({ result: parseCompletion });
 	} catch (error) {
+		console.log("error: ", error);
 		res.status(500).json({ error: error.message });
 	}
 }
