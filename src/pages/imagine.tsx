@@ -86,7 +86,7 @@ export const getServerSideProps = withPageAuthRequired({
 export default function Imagine({ userGen, user }: ImagineProps) {
 	const router = useRouter();
 
-	console.log(user)
+	// console.log(user)
 
 	const { t } = useTranslation('common');
 	
@@ -103,6 +103,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 	const [genIndex, setGenIndex] = useState(genLen);
 	const [genLenPlus1, setGenLenPlus1] = useState(genLen + 1);
 	const [logoDescriptionWhy, setLogoDescriptionWhy] = useState("");
+	const [errGen, setErrGen] = useState(false)
 
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -185,9 +186,10 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		});
 	}
 
-	const handleCreate =  async (e: React.FormEvent<HTMLFormElement>) => {
+	const handleCreate =  async (e: React.FormEvent<HTMLFormElement>, n: number) => {
 		e.preventDefault();
 		setLoading(true);
+		setErrGen(false);
 
 		if (user && (user.email !== 'davad701@gmail.com' && user.email !== 'ing.sandragranados@gmail.com' && user.email !== 'juangranadosf@usantotomas.edu.co')) {
 			sendEmail('generateCTA', product);
@@ -200,7 +202,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		setGenIndex(genLen);
 		
 		try {
-			let design_briefNLine = await getDesignBrief(product);
+			let design_briefNLine: DesighBrief = await getDesignBrief(product);
 			console.log('handleCreate#design_briefNLine: ', design_briefNLine)
 			
 			// let indexDomain = 0;
@@ -280,10 +282,17 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			
 			setLoading(false);
 			setCanShowImage(true);
+			setErrGen(false)
 		} catch (error) {
 			console.log('error: ', error);
-			setLoading(false);
-			return;
+			if(n > 0) {
+				handleCreate(e, n-1)
+			} else {
+				setErrGen(true)
+				setLoading(false);
+				return;
+			}
+			
 		}
 	}
 
@@ -378,7 +387,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 
 	useEffect(() => {
     if (genIndex === genLen) {
-			setProduct("");
+			// setProduct("");
       setDescription("");
       setDesignBrief('');
       setImages([]);
@@ -417,7 +426,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 						</h1>
 						<form
 							className="flex flex-col mb-10 mt-6 w-full"
-							onSubmit={handleCreate}
+							onSubmit={(e) => handleCreate(e, 3)}
 						>
 							<label className='mb-2' htmlFor="name">Describe your product, company, brand ... </label>
 							<div className='w-full'>
@@ -457,6 +466,10 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 									)}
 									{!showLoadingState ? "Create" : ""}
 								</button>
+								{errGen ? 
+								<p className=' text-red-400'>There was a err, try again or contact support@artmelon.me preferible sending a screenshot of the err</p>
+								: null
+								}
 							</div>
 						</form>
 						<div>

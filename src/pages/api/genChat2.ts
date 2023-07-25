@@ -151,6 +151,8 @@ export default async function handler(
 			
 			res.status(200).json({ result: functionResponse })
 			return
+		} else {
+			throw new Error(`Function call not implemented: ${responseMessage?.function_call}`);
 		}
 	} catch (error: any) {
 		console.log('/genChat2 err: ', error);
