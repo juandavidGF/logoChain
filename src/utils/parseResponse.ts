@@ -55,7 +55,7 @@ function parseValue(value: string): any {
 }
 
 export function parseDesignBrief(str: string) {
-	const data: DesighBrief = {};
+	const data: any = {};
 
 	// const strTest =  [
 	// 	'Yes, the language used in the given text is Spanish.',
