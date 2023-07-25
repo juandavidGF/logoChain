@@ -86,6 +86,8 @@ export const getServerSideProps = withPageAuthRequired({
 export default function Imagine({ userGen, user }: ImagineProps) {
 	const router = useRouter();
 
+	console.log(user)
+
 	const { t } = useTranslation('common');
 	
 	const [product, setProduct] = useState<string>("");
@@ -186,7 +188,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		e.preventDefault();
 		setLoading(true);
 
-		if (user && (user.email !== 'davad701@gmail.com' && user.email !== 'ing.sandragranados@gmail.com')) {
+		if (user && (user.email !== 'davad701@gmail.com' && user.email !== 'ing.sandragranados@gmail.com' && user.email !== 'juangranadosf@usantotomas.edu.co')) {
 			sendEmail('generateCTA', product);
 
 			alert("We are processing the payments manually for now. We'll send you a email for complete the payment and add credits to your account :)");
@@ -481,8 +483,14 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 								<>
 									{Object.entries(designBrief).map(([key, value]) => (
 										<div className='text-sm' key={key}>
-											<strong>{key}:</strong> {displayValue(value)}
-											<br />
+											{(key !== 'logoPrompt' && key !== 'whyTheLogo') ? 
+											<div>
+												<strong>{key}:</strong> {displayValue(value)}
+												<br />
+											</div>
+												: null
+											}
+											
 										</div>
 									))}
 								</>
