@@ -153,7 +153,7 @@ export default async function handler(
 			return
 		}
 	} catch (error: any) {
-		
+		console.log('/genChat2 err: ', error);
 		res.status(500).json({ message: error.message, type: "Internal server error" });
 		return
 	}
@@ -193,5 +193,5 @@ async function getIdentityBrandAssets(
 		whyTheLogo: whyTheLogo
 	}
 
-	return designBrief;
+	return JSON.stringify(designBrief);
 }

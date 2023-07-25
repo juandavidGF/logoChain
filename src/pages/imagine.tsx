@@ -132,7 +132,9 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			}
 		};
 
-		const response = await request("/api/genChat2", payload);
+		const resJSON = await request("/api/genChat2", payload);
+		const response = await resJSON.json()
+
 		console.log('getDesignBrief#response: ', response.result);
 
 		return response.result;
