@@ -186,7 +186,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		e.preventDefault();
 		setLoading(true);
 
-		if (user && user.email !== 'davad701@gmail.com') {
+		if (user && (user.email !== 'davad701@gmail.com' && user.email !== 'ing.sandragranados@gmail.com')) {
 			sendEmail('generateCTA', product);
 
 			alert("We are processing the payments manually for now. We'll send you a email for complete the payment and add credits to your account :)");
