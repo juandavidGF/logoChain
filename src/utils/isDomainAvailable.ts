@@ -5,14 +5,14 @@ const whois = require('whois')
 const lookup = promisify(whois.lookup);
 
 async function isDomainAvailable(domain: string): Promise<boolean> {
-    try {
-        const data = await lookup(domain);
-        const pattern = /^No match for domain/;
-        return pattern.test(data);
-    } catch (err) {
-        console.error(err);
-        return false;
-    }
+	try {
+		const data = await lookup(domain);
+		const pattern = /^No match for domain/;
+		return pattern.test(data);
+	} catch (err) {
+		console.error(err);
+		return false;
+	}
 }
 
 export default isDomainAvailable;

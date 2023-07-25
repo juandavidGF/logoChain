@@ -130,7 +130,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			}
 		};
 
-		const response = await request("/api/genChat", payload);
+		const response = await request("/api/genChat2", payload);
 		console.log('getDesignBrief#response: ', response.result);
 
 		return response.result;
@@ -199,43 +199,39 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		try {
 			let design_briefNLine = await getDesignBrief(product);
 			
-			if (!design_briefNLine['Web domain']) {
-				setLoading(false);
-				return;
-			};
 			let indexDomain = 0;
-			let domainAvailable = design_briefNLine['Web domain'][indexDomain].available;
-			let getDomains: webDomain[] = design_briefNLine['Web domain'];
-			while(!domainAvailable) {
-				let response: webDomain[] = (await request("/api/genChat", {
-					chain: "get_domain",
-					prompt: {
-						product: product,
-						company_name: design_briefNLine['Company name'],
-						domain: design_briefNLine['Web domain'][indexDomain].domain,
-					}
-				})).result;
-				getDomains = getDomains.concat(response);
-				console.log('!domainAvailable#getDomains', getDomains);
-				domainAvailable = response.some(webDom => webDom.available)
-				console.log(domainAvailable)
-				indexDomain++;
-			}
-			design_briefNLine['Web domain'] = getDomains;
+			let domainAvailable = design_briefNLine['domains'][indexDomain];
+			// let getDomains: webDomain[] = design_briefNLine['Web domain'];
+			// while(!domainAvailable) {
+			// 	let response: webDomain[] = (await request("/api/genChat", {
+			// 		chain: "get_domain",
+			// 		prompt: {
+			// 			product: product,
+			// 			company_name: design_briefNLine['Company name'],
+			// 			domain: design_briefNLine['Web domain'][indexDomain].domain,
+			// 		}
+			// 	})).result;
+			// 	getDomains = getDomains.concat(response);
+			// 	console.log('!domainAvailable#getDomains', getDomains);
+			// 	domainAvailable = response.some(webDom => webDom.available)
+			// 	console.log(domainAvailable)
+			// 	indexDomain++;
+			// }
+			// design_briefNLine['Web domain'] = getDomains;
 			
 			setDesignBrief(design_briefNLine);
 	
-			const logo_description_brief = await getCompanyLogoDescription(product, JSON.stringify(design_briefNLine));
-			setDescription(logo_description_brief);
+			// const logo_description_brief = await getCompanyLogoDescription(product, JSON.stringify(design_briefNLine));
+			setDescription(design_briefNLine.whyTheLogo);
 
 			let promptConcat: string | LogoDescription = "";
 	
 			const justGetTheLogoDescription = true;
 			if (justGetTheLogoDescription) {
-				promptConcat = logo_description_brief;
+				promptConcat = design_briefNLine.logoPrompt;
 			} else {
 				let promptConcat: string = "";
-				Object.entries(logo_description_brief).forEach(([key, value]) => {
+				Object.entries(design_briefNLine.logoPrompt).forEach(([key, value]) => {
 					console.log('key: ', key)
 					if(key !== 'Why') {
 						promptConcat += value
@@ -243,32 +239,32 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 				});
 			}
 
-			const logo_description_why = (await request("/api/genChat", {
-				chain: "logo_description_why",
-				prompt: {
-					product,
-					design_brief: designBrief,
-					logo_description_brief: logo_description_brief
-				},
-			})).result;
+			// const logo_description_why = (await request("/api/genChat", {
+			// 	chain: "logo_description_why",
+			// 	prompt: {
+			// 		product,
+			// 		design_brief: designBrief,
+			// 		logo_description_brief: design_briefNLine.logoPrompt
+			// 	},
+			// })).result;
 
-			setLogoDescriptionWhy(logo_description_why);
+			setLogoDescriptionWhy(design_briefNLine.whyTheLogo);
 
-			const image_json = await getImageJson(promptConcat);
+			const image_json = await getImageJson(design_briefNLine.logoPrompt);
 
 			const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
 			setImages(images);
 	
-			await saveGeneration(images, design_briefNLine, logo_description_brief, logo_description_why);
+			await saveGeneration(images, design_briefNLine, design_briefNLine.logoPrompt, design_briefNLine.whyTheLogo);
 	
 			setGenerations((prevGenerations) => {
 				const newGeneration = {
 					createdDate: Date.now(),
 					product: product,
 					images: images,
-					description: logo_description_brief,
+					description: design_briefNLine.logoPrompt,
 					designBrief: design_briefNLine,
-					logoDescriptionWhy: logo_description_why
+					logoDescriptionWhy: design_briefNLine.whyTheLogo
 				};
 			
 				const updatedGenerations = [...prevGenerations, newGeneration];

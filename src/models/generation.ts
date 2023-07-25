@@ -12,14 +12,13 @@ export interface webDomain {
 }
 
 export interface DesighBrief {
-	Product?: string;
-	"Company Name"?: string;
-	"Web domain"?: webDomain[] | string;
-	"Target Audience"?: string;
-	Slogan?: string;
-	Tagline?: string;
-	domainAvailability?: boolean;
-	[ key: string ]: string | string[] | boolean | undefined | webDomain[];
+	product: string;
+	companyName: string;
+	domains: webDomain[] | string;
+	slogan: string;
+	tagline: string;
+	logoPrompt: string;
+	whyTheLogo: string;
 }
 
 export interface Generation {
