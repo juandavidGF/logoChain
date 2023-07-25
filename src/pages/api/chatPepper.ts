@@ -22,10 +22,10 @@ export default async function handler(
     return
   }
 
-	const body = JSON.parse(req.body)
+	// const body = JSON.parse(req.body)
 
-	const { chain } = body;
-	const { prompt } = body;
+	const { chain } = req.body;
+	const { prompt } = req.body;
 
 	const messages: ChatCompletionRequestMessage[] = [{
 		role: 'user',
