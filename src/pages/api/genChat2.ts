@@ -108,49 +108,56 @@ export default async function handler(
 	}];
 
 	console.log('content', content)
-	
-	const response = await openai.createChatCompletion({
-		model: "gpt-3.5-turbo-0613",
-		messages: messages,
-		functions: functions,
-		function_call: "auto"
-	});
-	
 
-	let responseMessage = response.data.choices[0].message;
-
-	console.log('responseMessage: ', responseMessage);
-
-	if (responseMessage?.function_call) {
-		let function_name = responseMessage.function_call.name;
-		let functionArgs;
-		if (responseMessage.function_call && responseMessage.function_call.arguments) {
-			functionArgs = JSON.parse(responseMessage.function_call.arguments);
-		}
-		let functionResponse;
-
-		switch (function_name) {
-			case 'getIdentityBrandAssets':
-				functionResponse = await getIdentityBrandAssets(
-					functionArgs.companyName,
-					functionArgs.domain1,
-					functionArgs.domain2,
-					functionArgs.domain3,
-					functionArgs.slogan,
-					functionArgs.tagline,
-					functionArgs.logoPrompt,
-					functionArgs.whyTheLogo
-				);
-				break;
-			default:
-				throw new Error(`Function not implemented: ${function_name}`);
-		}
-
-		console.log('functionResponse: ', functionResponse);
+	try {
+		const response = await openai.createChatCompletion({
+			model: "gpt-3.5-turbo-0613",
+			messages: messages,
+			functions: functions,
+			function_call: "auto"
+		});
 		
-		res.status(200).json({ result: functionResponse })
+	
+		let responseMessage = response.data.choices[0].message;
+	
+		console.log('responseMessage: ', responseMessage);
+	
+		if (responseMessage?.function_call) {
+			let function_name = responseMessage.function_call.name;
+			let functionArgs;
+			if (responseMessage.function_call && responseMessage.function_call.arguments) {
+				functionArgs = JSON.parse(responseMessage.function_call.arguments);
+			}
+			let functionResponse;
+	
+			switch (function_name) {
+				case 'getIdentityBrandAssets':
+					functionResponse = await getIdentityBrandAssets(
+						functionArgs.companyName,
+						functionArgs.domain1,
+						functionArgs.domain2,
+						functionArgs.domain3,
+						functionArgs.slogan,
+						functionArgs.tagline,
+						functionArgs.logoPrompt,
+						functionArgs.whyTheLogo
+					);
+					break;
+				default:
+					throw new Error(`Function not implemented: ${function_name}`);
+			}
+	
+			console.log('functionResponse: ', functionResponse);
+			
+			res.status(200).json({ result: functionResponse })
+			return
+		}
+	} catch (error: any) {
+		
+		res.status(500).json({ message: error.message, type: "Internal server error" });
+		return
 	}
-	res.status(500).json({ message: 'not arguments in the response'})
+	
 }
 
 async function getIdentityBrandAssets(

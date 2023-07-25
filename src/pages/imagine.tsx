@@ -200,9 +200,10 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		
 		try {
 			let design_briefNLine = await getDesignBrief(product);
+			console.log('handleCreate#design_briefNLine: ', design_briefNLine)
 			
-			let indexDomain = 0;
-			let domainAvailable = design_briefNLine['domains'][indexDomain];
+			// let indexDomain = 0;
+			// let domainAvailable = design_briefNLine['domains'][indexDomain];
 			// let getDomains: webDomain[] = design_briefNLine['Web domain'];
 			// while(!domainAvailable) {
 			// 	let response: webDomain[] = (await request("/api/genChat", {
