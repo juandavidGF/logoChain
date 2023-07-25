@@ -193,5 +193,5 @@ async function getIdentityBrandAssets(
 		whyTheLogo: whyTheLogo
 	}
 
-	return JSON.stringify(designBrief);
+	return designBrief;
 }
