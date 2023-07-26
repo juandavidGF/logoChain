@@ -10,12 +10,12 @@ export default function handler(
   res: NextApiResponse<any>
 ) {
 
-	if (req.method !== 'POST') {
-    res.status(405).send({ error: 'Only POST requests allowed' })
-    return
-  }
+	// if (req.method !== 'POST') {
+  //   res.status(405).send({ error: 'Only POST requests allowed' })
+  //   return
+  // }
 
-	console.log(req.body)
+	// console.log(req.body)
 
 
   res.status(200).json({ name: 'John Doe' })
