@@ -52,7 +52,7 @@ export default async function handler(
 		// There is objectId, but in servedSideProps It's number
 
 		res.status(200).json(user);
-	} 
+	}
 	catch (error: any) {
     return res
 			.status(500)

@@ -164,7 +164,9 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			},
 		};
 
-		const response = await request("/api/imagine", payload);
+		const response = await request("/api/imagineSD3", payload);
+
+		console.log({response});
 	
 		return response;
 	};
@@ -191,7 +193,11 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		setLoading(true);
 		setErrGen(false);
 
-		if (user && (user.email !== 'davad701@gmail.com' && user.email !== 'ing.sandragranados@gmail.com' && user.email !== 'juangranadosf@usantotomas.edu.co')) {
+		if (user && 
+			(user.email !== 'davad701@gmail.com' && 
+			user.email !== 'ing.sandragranados@gmail.com' && 
+			user.email !== 'juangranadosf@usantotomas.edu.co')
+		) {
 			sendEmail('generateCTA', product);
 
 			alert("We are processing the payments manually for now. We'll send you a email for complete the payment and add credits to your account :)");
@@ -258,8 +264,11 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 
 			const image_json = await getImageJson(design_briefNLine.logoPrompt);
 
-			const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
-			setImages(images);
+			// const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
+			// setImages(images);
+
+			// replicate
+			setImages(image_json)
 	
 			await saveGeneration(images, design_briefNLine, design_briefNLine.logoPrompt, design_briefNLine.whyTheLogo);
 	

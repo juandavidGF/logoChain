@@ -1,13 +1,13 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
+import OpenAI from 'openai';
 import isDomainAvailable from '@/utils/isDomainAvailable';
+import { ChatCompletionFunctionRunnerParams } from 'openai/lib/ChatCompletionRunner';
+import { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources';
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env['OPENAI_API_KEY'],
 });
-
-const openai = new OpenAIApi(configuration);
 
 type Data = {
   name: string
@@ -46,63 +46,55 @@ export default async function handler(
 	}
 
 	
-	const functions = [
+	const tools: ChatCompletionTool[] = [
 		{
-			name: "getIdentityBrandAssets",
-			description: "Get the identity brand assets for the product description",
-			parameters: {
-				type: "object",
-				properties: {
-					companyName: {
-						type: "string",
-						description: "The name of the company",
+			type: "function",
+			function: {
+				name: "getIdentityBrandAssets",
+				description: "Get the identity brand assets for the product description",
+				parameters: {
+					type: "object",
+					properties: {
+						companyName: {
+							type: "string",
+							description: "The name of the company",
+						},
+						domain1: { 
+							type: "string",
+							description: "the web domain of the company"
+						},
+						domain2: { 
+							type: "string",
+							description: "different name suggestion for the company"
+						},
+						domain3: { 
+							type: "string",
+							description: "different name suggestion for the company"
+						},
+						slogan: {
+							type: "string",
+							description: "the slogan for the company"
+						},
+						tagline: {
+							type: "string",
+							description: "the tagline for the company"
+						},
+						logoPrompt: {
+							type: "string",
+							description: "the logo prompt to generate using LLMs like Dall-e"
+						},
+						whyTheLogo: {
+							type: "string",
+							description: "the reason because the logo was selected"
+						}
 					},
-					domain1: { 
-						type: "string",
-						description: "the web domain of the company"
-					},
-					domain2: { 
-						type: "string",
-						description: "different name suggestion for the company"
-					},
-					domain3: { 
-						type: "string",
-						description: "different name suggestion for the company"
-					},
-					slogan: {
-						type: "string",
-						description: "the slogan for the company"
-					},
-					tagline: {
-						type: "string",
-						description: "the tagline for the company"
-					},
-					logoPrompt: {
-						type: "string",
-						description: "the logo prompt to generate using LLMs like Dall-e"
-					},
-					whyTheLogo: {
-						type: "string",
-						description: "the reason because the logo was selected"
-					}
+					required: ["companyName", "domain1", "domain2", "domain3", "slogan", "logoPrompt", "whyTheLogo"],
 				},
-				required: ["companyName", "domain1", "domain2", "domain3", "slogan", "logoPrompt", "whyTheLogo"],
-			},
-		},
-		// {
-		// 	name: "getDomain",
-		// 	description: "get the different domain for the company",
-		// 	parameters: {
-		// 		type: "object",
-		// 		properties: {
-					
-		// 		}
-
-		// 	}
-		// }
+			}
+		}
 	];
 
-	const messages: ChatCompletionRequestMessage[] = [{
+	const messages: ChatCompletionMessageParam[] = [{
 		role: 'user',
 		content: content
 	}];
@@ -110,52 +102,51 @@ export default async function handler(
 	console.log('content', content)
 
 	try {
-		const response = await openai.createChatCompletion({
-			model: "gpt-3.5-turbo-0613",
+		const response = await openai.chat.completions.create({
+			model: "gpt-3.5-turbo",
 			messages: messages,
-			functions: functions,
-			function_call: "auto"
+			tools: tools,
+			tool_choice: "required",
 		});
 		
 	
-		let responseMessage = response.data.choices[0].message;
+		let rMesssage = response.choices[0].message;
 	
-		console.log('responseMessage: ', responseMessage);
+		console.log({rMesssage});
 	
-		if (responseMessage?.function_call) {
-			let function_name = responseMessage.function_call.name;
-			let functionArgs;
-			if (responseMessage.function_call && responseMessage.function_call.arguments) {
-				functionArgs = JSON.parse(responseMessage.function_call.arguments);
-			}
+		if (rMesssage.tool_calls) {
+			const { name, arguments: argu } = rMesssage.tool_calls[0].function;
+
+			const args = JSON.parse(argu);
+			
 			let functionResponse;
 	
-			switch (function_name) {
+			switch (name) {
 				case 'getIdentityBrandAssets':
 					functionResponse = await getIdentityBrandAssets(
-						functionArgs.companyName,
-						functionArgs.domain1,
-						functionArgs.domain2,
-						functionArgs.domain3,
-						functionArgs.slogan,
-						functionArgs.tagline,
-						functionArgs.logoPrompt,
-						functionArgs.whyTheLogo
+						args.companyName,
+						args.domain1,
+						args.domain2,
+						args.domain3,
+						args.slogan,
+						args.tagline,
+						args.logoPrompt,
+						args.whyTheLogo
 					);
 					break;
 				default:
-					throw new Error(`Function not implemented: ${function_name}`);
+					throw new Error(`Function not implemented: ${name}`);
 			}
 	
-			console.log('functionResponse: ', functionResponse);
+			console.log('functionResponse: ', {name, args});
 			
-			res.status(200).json({ result: functionResponse })
+			res.status(200).json({ result: {name, args} })
 			return
 		} else {
-			throw new Error(`Function call not implemented: ${responseMessage?.function_call}`);
+			throw new Error(`Function call not implemented: `);
 		}
 	} catch (error: any) {
-		console.log('/genChat2 err: ', error);
+		console.error('/genChat2 err: ', error.message);
 		res.status(500).json({ message: error.message, type: "Internal server error" });
 		return
 	}
