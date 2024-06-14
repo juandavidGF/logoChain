@@ -5,9 +5,7 @@ import isDomainAvailable from '@/utils/isDomainAvailable';
 import { ChatCompletionFunctionRunnerParams } from 'openai/lib/ChatCompletionRunner';
 import { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources';
 
-const openai = new OpenAI({
-  apiKey: process.env['OPENAI_API_KEY'],
-});
+const openai = new OpenAI();
 
 type Data = {
   name: string
@@ -20,32 +18,21 @@ interface WeatherInfo {
 	forecast: string[];
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<any>
-) {
-	if (req.method !== 'POST') {
-    res.status(405).send({ error: 'Only POST requests allowed' })
-    return
-  }
 
-	const body = JSON.parse(req.body)
+const logoInstruction = `take this examples of prompts for dall-e to create nice icon/logo:
 
-	const { chain } = body;
-	const { prompt } = body;
+	1. Modern startup logo with no text, symmetrical, minimalistic, speed flash fast grocery delivery icon, centered, gradient, dark background.
+	2. appicon style, Create a minimalistic and modern logo for a blog post titled 'Maximizing Efficiency as an Indie Entrepreneur: Time Management and Prioritization Tips'. The logo should represent the concepts of time management, productivity, and entrepreneurship., flat icon
+	3. a tech company new logo, minimalistic, geometric, futuristic, stable diffusion, trending on artstation, sharp focus, studio photo, intricate details, highly detailed, by greg rutkowski.
+	4. A cute blue baby birdie, logo in a dark circle as the background, vibrant, adorable, bubbles, cheerful.
+	5. A slanting rectangle shape in red and black minimal logo in dark circle as the background, vibrant, 3d isomorphic.
 
-	let content;
+	Now try to combine the features for the company, and product, to reflect the brand, and create a new and simple prompt for the logo/icon.
+	Please include the shapes, colors, and details for the logo, make It simple
+	please include can include the name of the company on the logo composition,
+	`
+	// And pleas specify that the logo must not contain letters.
 
-	switch (chain) {
-		case "design_brief":
-			content = `can you suggest the identity brand assets for a company with this product?: 
-			"${prompt.product}?"`
-			break;
-		default:
-			throw new Error('chain not supported');
-	}
-
-	
 	const tools: ChatCompletionTool[] = [
 		{
 			type: "function",
@@ -81,7 +68,7 @@ export default async function handler(
 						},
 						logoPrompt: {
 							type: "string",
-							description: "the logo prompt to generate using LLMs like Dall-e"
+							description: logoInstruction,
 						},
 						whyTheLogo: {
 							type: "string",
@@ -93,6 +80,31 @@ export default async function handler(
 			}
 		}
 	];
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<any>
+) {
+	if (req.method !== 'POST') {
+    res.status(405).send({ error: 'Only POST requests allowed' })
+    return
+  }
+
+	const body = JSON.parse(req.body)
+
+	const { chain } = body;
+	const { prompt } = body;
+
+	let content;
+
+	switch (chain) {
+		case "design_brief":
+			content = `can you suggest the identity brand assets for a company with this product?: 
+			"${prompt.product}?"`
+			break;
+		default:
+			throw new Error('chain not supported');
+	}
 
 	const messages: ChatCompletionMessageParam[] = [{
 		role: 'user',
@@ -140,7 +152,7 @@ export default async function handler(
 	
 			console.log('functionResponse: ', {name, args});
 			
-			res.status(200).json({ result: {name, args} })
+			res.status(200).json({ args });
 			return
 		} else {
 			throw new Error(`Function call not implemented: `);

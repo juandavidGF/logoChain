@@ -133,25 +133,11 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			}
 		};
 
-		const response = await request("/api/genChat2", payload);
+		const {args} = await request("/api/genChat2", payload);
 
-		console.log('getDesignBrief#response: ', response.result);
+		console.log('getDesignBrief: ', {args});
 
-		return response.result;
-	};
-
-	
-	const getCompanyLogoDescription = async (product: string, design_brief: string): Promise<string> => {
-		const payload: RequestPayload = {
-			chain: "logo_description_brief",
-			prompt: {
-				product,
-				design_brief: design_brief
-			},
-		};
-	
-		const response = await request("/api/genChat", payload);
-		return response.result;
+		return args;
 	};
 	
 	const getImageJson = async (
@@ -164,11 +150,27 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			},
 		};
 
-		const response = await request("/api/imagineSD3", payload);
-
-		console.log({response});
+		try {
+			const response = await request("/api/imagineSD3", payload);
+			const {image_json} = response;
+			if(!image_json) throw Error(`getImageJson undefinated generation`);
+			console.log('getImageJson after call the api - flag1', {image_json});
+			console.log('getImageJson', {response});
+			// if(!response.ok) throw Error(`error ${response}`);
+			console.log('flag2');
 	
-		return response;
+			// const image = `data:image/jpeg;base64,${image_json}`;
+			const image = image_json;
+	
+			setImages(image);
+	
+			console.log('getImageJson ',{image});
+		
+			return response;
+			
+		} catch (error:any) {
+			throw Error(`getImageJson ${error.message}`);
+		}
 	};
 
 	const sendEmail = async (key = 'default', product = 'default') => {
@@ -209,7 +211,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 		
 		try {
 			let design_briefNLine: DesighBrief = await getDesignBrief(product);
-			console.log('handleCreate#design_briefNLine: ', design_briefNLine)
+			console.log('handleCreate#design_briefNLine: ', {design_briefNLine});
 			
 			// let indexDomain = 0;
 			// let domainAvailable = design_briefNLine['domains'][indexDomain];
@@ -251,6 +253,8 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 				});
 			}
 
+			console.log({design_briefNLine});
+			
 			// const logo_description_why = (await request("/api/genChat", {
 			// 	chain: "logo_description_why",
 			// 	prompt: {
@@ -259,16 +263,20 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			// 		logo_description_brief: design_briefNLine.logoPrompt
 			// 	},
 			// })).result;
+			
+			setLogoDescriptionWhy(design_briefNLine.logoPrompt);
 
-			setLogoDescriptionWhy(design_briefNLine.whyTheLogo);
+			console.log({logoDescriptionWhy});
 
-			const image_json = await getImageJson(design_briefNLine.logoPrompt);
+			const response = await getImageJson(design_briefNLine.logoPrompt);
+			
+			// console.log({image_json});
 
 			// const images: string[] = image_json.map((ImageData: ImageData) => ImageData.url);
 			// setImages(images);
 
-			// replicate
-			setImages(image_json)
+			// Stability
+			// setImages([image_json])
 	
 			await saveGeneration(images, design_briefNLine, design_briefNLine.logoPrompt, design_briefNLine.whyTheLogo);
 	
@@ -292,9 +300,10 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 			setLoading(false);
 			setCanShowImage(true);
 			setErrGen(false)
-		} catch (error) {
-			console.log('error: ', error);
-			if(n > 0) {
+		} catch (error: any) {
+			console.log('error handleCreate: ', error, error.message);
+			// if(n > 0) {
+			if(false) {
 				handleCreate(e, n-1)
 			} else {
 				setErrGen(true)
@@ -435,7 +444,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 						</h1>
 						<form
 							className="flex flex-col mb-10 mt-6 w-full"
-							onSubmit={(e) => handleCreate(e, 3)}
+							onSubmit={(e) => handleCreate(e, 1)}
 						>
 							<label className='mb-2' htmlFor="name">Describe your product, company, brand ... </label>
 							<div className='w-full'>
@@ -524,7 +533,7 @@ export default function Imagine({ userGen, user }: ImagineProps) {
 							) : null}
 							{logoDescriptionWhy ? <p className='text-gray-400'><span className="text-black text-sm"><strong>Logo composition:</strong> {logoDescriptionWhy}</span><br/></p> : null}
 						</div>
-						<div className="grid grid-cols-2 gap-1 mt-2 mb-10">
+						<div className="grid grid-cols-1 gap-1 mt-2 mb-10">
 							{images.length > 0 ? (
 								images.map((url, index) => (
 									<div key={index} className="w-full aspect-square shadow-md relative">
